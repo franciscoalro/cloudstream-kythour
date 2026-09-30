@@ -90,7 +90,7 @@ jobs:
           VERSION_NAME="$($AAPT dump badging "$APK" | sed -n "s/.*versionName='\([^']*\)'.*/\1/p")"
           PACKAGE_NAME="$($AAPT dump badging "$APK" | sed -n "s/package: name='\([^']*\)'.*/\1/p")"
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)"
-          CERT_SHA256="$($APKSIGNER verify --print-certs "$APK" | sed -n 's/Signer #1 certificate SHA-256 digest: //p')"
+          CERT_SHA256="$($APKSIGNER verify --print-certs "$APK" | sed -n 's/.*SHA-256 digest: //p' | head -1 | tr '[:upper:]' '[:lower:]' | tr -d ':[:space:]')"
           EXPECTED_CERT_SHA256="42931699f937b2a2c68da3101c955088ec564cc9aa568f65586e04dcb555ee4f"
           echo "Package: $PACKAGE_NAME"
           echo "Version: $VERSION_NAME ($VERSION_CODE)"
