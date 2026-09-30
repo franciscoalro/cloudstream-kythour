@@ -124,7 +124,6 @@ import com.lagradost.cloudstream3.ui.settings.Globals.isLayout
 import com.lagradost.cloudstream3.ui.settings.Globals.updateTv
 import com.lagradost.cloudstream3.ui.settings.SettingsGeneral
 import com.lagradost.cloudstream3.ui.setup.HAS_DONE_SETUP_KEY
-import com.lagradost.cloudstream3.ui.setup.SetupFragmentExtensions
 import com.lagradost.cloudstream3.utils.ApkInstaller
 import com.lagradost.cloudstream3.utils.AppContextUtils.getApiDubstatusSettings
 import com.lagradost.cloudstream3.utils.AppContextUtils.html
@@ -1188,6 +1187,16 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
 
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
 
+        // Kythour is ready to use without an onboarding wizard. Keep Android's
+        // system locale while locale_key is unset, preserve any explicit locale,
+        // and make plugin updates opt-out rather than requiring setup.
+        setKey(HAS_DONE_SETUP_KEY, true)
+        if (!settingsManager.contains(getString(R.string.auto_update_plugins_key))) {
+            settingsManager.edit {
+                putBoolean(getString(R.string.auto_update_plugins_key), true)
+            }
+        }
+
         setLastError(this)
 
         val settingsForProvider = SettingsJson()
@@ -1363,9 +1372,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                 com.lagradost.cloudstream3.plugins.KythourBootstrap.installBundledPlugins(
                     this@MainActivity
                 )
-                if (getKey<Boolean>(HAS_DONE_SETUP_KEY, false) != true &&
-                    DataStoreHelper.currentHomePage == null
-                ) {
+                if (DataStoreHelper.currentHomePage == null) {
                     DataStoreHelper.currentHomePage = "CineGato"
                 }
 
@@ -2037,22 +2044,9 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             removeKey(USER_SELECTED_HOMEPAGE_API)
         }
 
-        try {
-            if (getKey<Boolean>(HAS_DONE_SETUP_KEY, false) != true) {
-                navController.navigate(R.id.navigation_setup_language)
-                // If no plugins bring up extensions screen
-            } else if (PluginManager.getPluginsOnline().isEmpty()
-                && PluginManager.getPluginsLocal().isEmpty()
-//                && PREBUILT_REPOSITORIES.isNotEmpty()
-            ) {
-                navController.navigate(
-                    R.id.navigation_setup_extensions,
-                    SetupFragmentExtensions.newInstance(false)
-                )
-            }
-        } catch (e: Exception) {
-            logError(e)
-        }
+        // Kythour ships its providers in the APK. Never interrupt first launch
+        // with onboarding or an empty-extension screen; bootstrap and repository
+        // updates run automatically in the background.
 
 //        Used to check current focus for TV
 //        main {
