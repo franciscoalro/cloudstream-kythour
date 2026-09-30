@@ -41,7 +41,7 @@ object InAppUpdater {
     private const val GITHUB_USER_NAME = "recloudstream"
     private const val GITHUB_REPO = "cloudstream"
     private const val KYTHOUR_UPDATE_MANIFEST =
-        "https://raw.githubusercontent.com/franciscoalro/kythourcl-dist/main/app-update.json"
+        "https://raw.githubusercontent.com/franciscoalro/cloudstream-kythour/master/app-update.json"
 
     private const val PRERELEASE_PACKAGE_NAME = "com.lagradost.cloudstream3.prerelease"
     private const val LOG_TAG = "InAppUpdater"

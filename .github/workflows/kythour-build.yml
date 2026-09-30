@@ -94,3 +94,27 @@ jobs:
             --title "CloudStream Kythour $VERSION_NAME" \
             --notes "Build automático do CloudStream Kythour Premium. A instalação continua exigindo confirmação explícita do Android." \
             --prerelease
+
+      - name: Publish update manifest
+        if: github.event_name == 'push' || inputs.publish_release
+        env:
+          VERSION_CODE: ${{ steps.apk.outputs.version_code }}
+          VERSION_NAME: ${{ steps.apk.outputs.version_name }}
+          TAG: ${{ steps.apk.outputs.tag }}
+          APK: ${{ steps.apk.outputs.path }}
+        run: |
+          python3 scripts/update-app-manifest.py
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add app-update.json
+          if git diff --staged --quiet; then
+            echo "Update manifest is already current"
+            exit 0
+          fi
+          git commit -m "build: publish app update manifest [skip ci]"
+          git fetch origin master
+          if [ "$(git rev-parse origin/master)" != "$GITHUB_SHA" ]; then
+            echo "master advanced during build; newer workflow will publish its manifest"
+            exit 0
+          fi
+          git push origin HEAD:master
