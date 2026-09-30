@@ -46,10 +46,13 @@ jobs:
 
       - name: Build prerelease debug APK
         env:
+          SIGNING_STORE_FILE: ${{ github.workspace }}/kythour-debug.keystore
           SIGNING_KEY_ALIAS: androiddebugkey
           SIGNING_KEY_PASSWORD: android
           SIGNING_STORE_PASSWORD: android
         run: |
+          cp "$HOME/.android/debug.keystore" "$SIGNING_STORE_FILE"
+          chmod 600 "$SIGNING_STORE_FILE"
           chmod +x gradlew
           ./gradlew assemblePrereleaseDebug --stacktrace --no-daemon
 
@@ -68,6 +71,9 @@ jobs:
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)"
           CERT_SHA256="$($APKSIGNER verify --print-certs "$APK" | sed -n 's/Signer #1 certificate SHA-256 digest: //p')"
           EXPECTED_CERT_SHA256="42931699f937b2a2c68da3101c955088ec564cc9aa568f65586e04dcb555ee4f"
+          echo "Package: $PACKAGE_NAME"
+          echo "Version: $VERSION_NAME ($VERSION_CODE)"
+          echo "Certificate SHA-256: $CERT_SHA256"
           test "$PACKAGE_NAME" = 'com.lagradost.cloudstream3.prerelease.debug'
           test "$CERT_SHA256" = "$EXPECTED_CERT_SHA256"
           test -n "$VERSION_CODE"
