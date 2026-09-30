@@ -235,16 +235,17 @@ class HomeViewModel : ViewModel() {
         if (lock.contains(name)) return null
         lock += name
 
-        repo?.apply {
-            waitForHomeDelay()
+        try {
+            repo?.apply {
+                waitForHomeDelay()
 
-            expandable[name]?.let { current ->
-                debugAssert({ !current.hasNext }) {
-                    "Expand called when not needed"
-                }
+                expandable[name]?.let { current ->
+                    debugAssert({ !current.hasNext }) {
+                        "Expand called when not needed"
+                    }
 
-                val nextPage = current.currentPage + 1
-                val next = getMainPage(nextPage, mainPage.indexOfFirst { it.name == name })
+                    val nextPage = current.currentPage + 1
+                    val next = getMainPage(nextPage, mainPage.indexOfFirst { it.name == name })
                 if (next is Resource.Success) {
                     next.value.filterNotNull().forEach { main ->
                         main.items.forEach { newList ->
@@ -268,12 +269,12 @@ class HomeViewModel : ViewModel() {
                     current.hasNext = false
                 }
             }
-            _page.postValue(Resource.Success(expandable))
+                _page.postValue(Resource.Success(expandable))
+            }
+            return expandable[name]
+        } finally {
+            lock -= name
         }
-
-        lock -= name
-
-        return expandable[name]
     }
 
     // this is soo over engineered, but idk how I can make it clean without making the main api harder to use :pensive:

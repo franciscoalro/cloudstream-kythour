@@ -76,7 +76,6 @@ object InAppUpdater {
         @JsonProperty("object") @SerialName("object") val githubObject: GithubObject,
     )
 
-    @Serializable
     private data class Update(
         @JsonProperty("shouldUpdate") @SerialName("shouldUpdate") val shouldUpdate: Boolean,
         @JsonProperty("updateURL") @SerialName("updateURL") val updateURL: String?,
