@@ -88,8 +88,8 @@ class ApkInstaller(private val service: PackageInstallerService) {
                 installParams.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_REQUIRED)
             }
 
-            activeSession = packageInstaller.createSession(installParams)
             installParams.setSize(size)
+            activeSession = packageInstaller.createSession(installParams)
 
             val session = packageInstaller.openSession(activeSession)
             installProgressStatus.invoke(InstallProgressStatus.Downloading)
@@ -100,9 +100,11 @@ class ApkInstaller(private val service: PackageInstallerService) {
                     var bytesRead = inputStream.read(buffer)
 
                     while (bytesRead >= 0) {
-                        outputStream.write(buffer, 0, bytesRead)
+                        if (bytesRead > 0) {
+                            outputStream.write(buffer, 0, bytesRead)
+                            installProgress.invoke(bytesRead)
+                        }
                         bytesRead = inputStream.read(buffer)
-                        installProgress.invoke(bytesRead)
                     }
 
                     session.fsync(outputStream)

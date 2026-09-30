@@ -83,6 +83,7 @@ object InAppUpdater {
         @JsonProperty("updateVersion") @SerialName("updateVersion") val updateVersion: String?,
         @JsonProperty("changelog") @SerialName("changelog") val changelog: String?,
         @JsonProperty("updateNodeId") @SerialName("updateNodeId") val updateNodeId: String?,
+        val expectedApk: ExpectedApk? = null,
     )
 
     @Serializable
@@ -92,6 +93,10 @@ object InAppUpdater {
         @JsonProperty("apkUrl") @SerialName("apkUrl") val apkUrl: String,
         @JsonProperty("changelog") @SerialName("changelog") val changelog: String? = null,
         @JsonProperty("id") @SerialName("id") val id: String? = null,
+        @JsonProperty("packageName") @SerialName("packageName") val packageName: String? = null,
+        @JsonProperty("sha256") @SerialName("sha256") val sha256: String? = null,
+        @JsonProperty("certificateSha256") @SerialName("certificateSha256") val certificateSha256: String? = null,
+        @JsonProperty("size") @SerialName("size") val size: Long? = null,
     )
 
     private suspend fun Activity.getAppUpdate(installPrerelease: Boolean): Update {
@@ -101,7 +106,7 @@ object InAppUpdater {
             if (!installPrerelease) getKythourUpdate() else getPreReleaseUpdate()
         } catch (e: Exception) {
             Log.e(LOG_TAG, Log.getStackTraceString(e))
-            Update(false, null, null, null, null)
+            Update(false, null, null, null, null, null)
         }
     }
 
@@ -114,12 +119,24 @@ object InAppUpdater {
             packageManager.getPackageInfo(packageName, 0).versionCode.toLong()
         }
         val updateId = manifest.id ?: "kythour-${manifest.versionCode}"
+        val packageName = requireNotNull(manifest.packageName) { "Missing update package name" }
+        val sha256 = requireNotNull(manifest.sha256) { "Missing update SHA-256" }
+        val certificateSha256 = requireNotNull(manifest.certificateSha256) {
+            "Missing update signing certificate"
+        }
         return Update(
             shouldUpdate = manifest.versionCode > currentVersionCode && manifest.apkUrl.isNotBlank(),
             updateURL = manifest.apkUrl,
             updateVersion = manifest.versionName,
             changelog = manifest.changelog,
             updateNodeId = updateId,
+            expectedApk = ExpectedApk(
+                packageName = packageName,
+                versionCode = manifest.versionCode,
+                sha256 = sha256,
+                certificateSha256 = certificateSha256,
+                size = manifest.size,
+            ),
         )
     }
 
@@ -147,7 +164,7 @@ object InAppUpdater {
         val foundVersion = foundAsset?.name?.let { versionRegex.find(it) }
 
         if (foundVersion == null) {
-            return Update(false, null, null, null, null)
+            return Update(false, null, null, null, null, null)
         }
 
         val currentVersion = packageName?.let {
@@ -172,7 +189,8 @@ object InAppUpdater {
             foundAsset.browserDownloadUrl,
             foundVersion.groupValues[2],
             found.body,
-            found.nodeId
+            found.nodeId,
+            null,
         )
     }
 
@@ -194,7 +212,7 @@ object InAppUpdater {
         }?.getOrNull(0)
 
         if (foundAsset == null) {
-            return Update(false, null, null, null, null)
+            return Update(false, null, null, null, null, null)
         }
 
         val tagResponse = parseJson<GithubTag>(app.get(tagUrl, headers = headers).text)
@@ -206,15 +224,17 @@ object InAppUpdater {
             foundAsset.browserDownloadUrl,
             updateCommitHash,
             found.body,
-            found.nodeId
+            found.nodeId,
+            null,
         )
     }
 
     private val updateLock = Mutex()
 
-    private suspend fun Activity.downloadUpdate(url: String): Boolean {
+    private suspend fun Activity.downloadUpdate(url: String, expectedApk: ExpectedApk): Boolean {
         try {
-            Log.d(LOG_TAG, "Downloading update: $url")
+            ApkUpdateVerifier.requireAllowedUrl(url)
+            Log.d(LOG_TAG, "Downloading verified update: $url")
             val appUpdateName = "CloudStream"
             val appUpdateSuffix = "apk"
 
@@ -229,6 +249,7 @@ object InAppUpdater {
             updateLock.withLock {
                 sink.writeAll(app.get(url).body.source())
                 sink.close()
+                ApkUpdateVerifier.verify(this, downloadedFile, expectedApk)
                 openApk(this, Uri.fromFile(downloadedFile))
             }
 
@@ -287,6 +308,10 @@ object InAppUpdater {
         if (!update.shouldUpdate || update.updateURL == null) {
             return false
         }
+        if (!installPrerelease && update.expectedApk == null) {
+            Log.e(LOG_TAG, "Kythour update manifest has no verification metadata")
+            return false
+        }
 
         // Check if update should be skipped
         val updateNodeId = settingsManager.getString(
@@ -302,7 +327,8 @@ object InAppUpdater {
         // Automatic checks download through the foreground installer service.
         // Android still presents its mandatory package-install confirmation.
         if (checkAutoUpdate) {
-            val intent = PackageInstallerService.getIntent(this, update.updateURL)
+            val expected = update.expectedApk ?: return false
+            val intent = PackageInstallerService.getIntent(this, update.updateURL, expected)
             ContextCompat.startForegroundService(this, intent)
             runOnUiThread {
                 showToast(R.string.download_started, Toast.LENGTH_LONG)
@@ -356,8 +382,9 @@ object InAppUpdater {
                         when (currentInstaller) {
                             // New method
                             0 -> {
-                                val intent = PackageInstallerService.Companion.getIntent(
-                                    this@runAutoUpdate, update.updateURL
+                                val expected = update.expectedApk ?: return@setPositiveButton
+                                val intent = PackageInstallerService.getIntent(
+                                    this@runAutoUpdate, update.updateURL, expected
                                 )
                                 ContextCompat.startForegroundService(
                                     this@runAutoUpdate, intent
@@ -366,7 +393,8 @@ object InAppUpdater {
                             // Legacy
                             1 -> {
                                 ioSafe {
-                                    if (!downloadUpdate(update.updateURL)) {
+                                    val expected = update.expectedApk ?: return@ioSafe
+                                    if (!downloadUpdate(update.updateURL, expected)) {
                                         runOnUiThread {
                                             showToast(
                                                 R.string.download_failed, Toast.LENGTH_LONG

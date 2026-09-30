@@ -100,10 +100,13 @@ jobs:
           test -n "$VERSION_CODE"
           OUT="cloudstream-kythour-premium-${VERSION_CODE}-debug.apk"
           cp "$APK" "$OUT"
-          sha256sum "$OUT" | tee "${OUT}.sha256"
+          APK_SHA256="$(sha256sum "$OUT" | tee "${OUT}.sha256" | cut -d' ' -f1)"
           echo "path=$OUT" >> "$GITHUB_OUTPUT"
           echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
           echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "package_name=$PACKAGE_NAME" >> "$GITHUB_OUTPUT"
+          echo "cert_sha256=$CERT_SHA256" >> "$GITHUB_OUTPUT"
+          echo "apk_sha256=$APK_SHA256" >> "$GITHUB_OUTPUT"
           echo "tag=app-v$VERSION_CODE" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK artifact
@@ -138,8 +141,12 @@ jobs:
           VERSION_NAME: ${{ steps.apk.outputs.version_name }}
           TAG: ${{ steps.apk.outputs.tag }}
           APK: ${{ steps.apk.outputs.path }}
+          PACKAGE_NAME: ${{ steps.apk.outputs.package_name }}
+          CERT_SHA256: ${{ steps.apk.outputs.cert_sha256 }}
+          APK_SHA256: ${{ steps.apk.outputs.apk_sha256 }}
         run: |
           python3 scripts/update-app-manifest.py
+          python3 -m json.tool app-update.json >/dev/null
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
           git add app-update.json
