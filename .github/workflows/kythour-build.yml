@@ -44,6 +44,11 @@ jobs:
           cp "$HOME/.android/debug.keystore" "$HOME/work/_temp/keystore/kythour-debug.keystore"
           chmod 600 "$HOME/.android/debug.keystore" "$HOME/work/_temp/keystore/kythour-debug.keystore"
 
+      - name: Validate Kotlin ABI and unit checks
+        run: |
+          chmod +x gradlew
+          ./gradlew :library:checkKotlinAbi check --stacktrace --no-daemon
+
       - name: Build prerelease debug APK
         env:
           SIGNING_STORE_FILE: ${{ github.workspace }}/kythour-debug.keystore

@@ -41,6 +41,9 @@ class SearchViewModel : ViewModel() {
         MutableLiveData()
     val currentSearch: LiveData<Map<String, ExpandableSearchList>> get() = _currentSearch
 
+    private val _failedProviders = MutableLiveData<Set<String>>(emptySet())
+    val failedProviders: LiveData<Set<String>> get() = _failedProviders
+
     private val _currentHistory: MutableLiveData<List<SearchHistoryItem>> = MutableLiveData()
     val currentHistory: LiveData<List<SearchHistoryItem>> get() = _currentHistory
 
@@ -55,6 +58,15 @@ class SearchViewModel : ViewModel() {
         _searchResponse.postValue(Resource.Success(ExpandableSearchList(emptyList(), 0, false)))
         _currentSearch.postValue(emptyMap())
         expandableSearches.clear()
+        _failedProviders.postValue(emptySet())
+    }
+
+    fun retryFailedProviders(isQuickSearch: Boolean = false) {
+        val query = lastQuery ?: return
+        val failed = _failedProviders.value.orEmpty()
+        if (failed.isNotEmpty()) {
+            searchAndCancel(query, failed, ignoreSettings = true, isQuickSearch = isQuickSearch)
+        }
     }
 
     var lastQuery: String? = null
@@ -225,10 +237,12 @@ class SearchViewModel : ViewModel() {
             _searchResponse.postValue(Resource.Loading())
             _currentSearch.postValue(emptyMap())
             expandableSearches.clear()
+            _failedProviders.postValue(emptySet())
 
             lastQuery = query
 
             withContext(Dispatchers.IO) { // This interrupts UI otherwise
+                val failures = java.util.Collections.synchronizedSet(mutableSetOf<String>())
                 repos.filter { a ->
                     (ignoreSettings || (providersActive.isEmpty() || providersActive.contains(a.name))) && (!isQuickSearch || a.hasQuickSearch)
                 }.amap { a -> // Parallel
@@ -238,8 +252,11 @@ class SearchViewModel : ViewModel() {
                         val searchValue = search.value
                         expandableSearches[a.name] =
                             ExpandableSearchList(searchValue.items, 1, searchValue.hasNext)
+                    } else if (search is Resource.Failure) {
+                        failures += a.name
                     }
 
+                    _failedProviders.postValue(failures.toSet())
                     _currentSearch.postValue(expandableSearches)
                 }
 

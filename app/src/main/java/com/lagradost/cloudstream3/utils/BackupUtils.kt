@@ -364,16 +364,17 @@ object BackupUtils {
         isEditingAppSettings: Boolean = false,
     ) {
         val editor = DataStore.editor(this, isEditingAppSettings)
-        map?.forEach {
-            if (it.key.isTransferable()) {
-                val value = if (it.key == ACCOUNTS_KEY && it.value is String) {
-                    runCatching { sanitizeAccounts(it.value) }.getOrElse {
-                        throw IOException("Invalid account profiles in backup", it)
+        map?.forEach { entry ->
+            if (entry.key.isTransferable()) {
+                val rawValue = entry.value
+                val value = if (entry.key == ACCOUNTS_KEY && rawValue is String) {
+                    runCatching { sanitizeAccounts(rawValue) }.getOrElse { error ->
+                        throw IOException("Invalid account profiles in backup", error)
                     }
                 } else {
-                    it.value
+                    rawValue
                 }
-                editor.setKeyRaw(it.key, value)
+                editor.setKeyRaw(entry.key, value)
             }
         }
         editor.apply()
