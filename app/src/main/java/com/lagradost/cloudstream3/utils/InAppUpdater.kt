@@ -76,6 +76,12 @@ object InAppUpdater {
         @JsonProperty("object") @SerialName("object") val githubObject: GithubObject,
     )
 
+    private enum class UpdateCheckFailure {
+        NETWORK,
+        INVALID_RESPONSE,
+        SECURITY,
+    }
+
     private data class Update(
         @JsonProperty("shouldUpdate") @SerialName("shouldUpdate") val shouldUpdate: Boolean,
         @JsonProperty("updateURL") @SerialName("updateURL") val updateURL: String?,
@@ -83,6 +89,7 @@ object InAppUpdater {
         @JsonProperty("changelog") @SerialName("changelog") val changelog: String?,
         @JsonProperty("updateNodeId") @SerialName("updateNodeId") val updateNodeId: String?,
         val expectedApk: ExpectedApk? = null,
+        val failure: UpdateCheckFailure? = null,
     )
 
     @Serializable
@@ -105,7 +112,19 @@ object InAppUpdater {
             if (!installPrerelease) getKythourUpdate() else getPreReleaseUpdate()
         } catch (e: Exception) {
             Log.e(LOG_TAG, Log.getStackTraceString(e))
-            Update(false, null, null, null, null, null)
+            Update(
+                false,
+                null,
+                null,
+                null,
+                null,
+                null,
+                failure = when (e) {
+                    is IOException -> UpdateCheckFailure.NETWORK
+                    is IllegalArgumentException -> UpdateCheckFailure.SECURITY
+                    else -> UpdateCheckFailure.INVALID_RESPONSE
+                },
+            )
         }
     }
 
@@ -303,17 +322,40 @@ object InAppUpdater {
             return false
         }
 
+        val isManualKythourCheck = !checkAutoUpdate && !installPrerelease
+        if (isManualKythourCheck) {
+            runOnUiThread { showToast(R.string.checking_for_update) }
+        }
+
         val update = getAppUpdate(installPrerelease)
+        if (update.failure != null) {
+            // Never report "latest" when the server could not be reached or its signed
+            // update metadata could not be parsed. Automatic checks remain silent.
+            if (isManualKythourCheck) {
+                val message = when (update.failure) {
+                    UpdateCheckFailure.NETWORK -> R.string.update_check_network_error
+                    UpdateCheckFailure.INVALID_RESPONSE -> R.string.update_check_invalid_response
+                    UpdateCheckFailure.SECURITY -> R.string.update_check_security_error
+                }
+                runOnUiThread { showToast(message, Toast.LENGTH_LONG) }
+            }
+            return false
+        }
         if (!update.shouldUpdate || update.updateURL == null) {
             // A manual check must always give feedback. Automatic checks stay silent so
             // opening the app does not produce an unnecessary notification or toast.
-            if (!checkAutoUpdate && !installPrerelease) {
+            if (isManualKythourCheck) {
                 runOnUiThread { showToast(R.string.no_update_found) }
             }
             return false
         }
         if (!installPrerelease && update.expectedApk == null) {
             Log.e(LOG_TAG, "Kythour update manifest has no verification metadata")
+            if (isManualKythourCheck) {
+                runOnUiThread {
+                    showToast(R.string.update_check_security_error, Toast.LENGTH_LONG)
+                }
+            }
             return false
         }
 

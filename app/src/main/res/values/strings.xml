@@ -323,6 +323,10 @@
     <string name="show_episode_text">Episode Text</string>
     <string name="poster_ui_settings">Toggle UI elements on poster</string>
     <string name="no_update_found">You are already using the latest version</string>
+    <string name="checking_for_update">Checking for updates…</string>
+    <string name="update_check_network_error">Could not check for updates. Check your connection and try again.</string>
+    <string name="update_check_invalid_response">The update server returned an invalid response. Please try again later.</string>
+    <string name="update_check_security_error">The available update could not be securely verified.</string>
     <string name="check_for_update">Check for Update</string>
     <string name="video_lock">Lock</string>
     <string name="video_aspect_ratio_resize">Resize</string>
