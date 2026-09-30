@@ -228,7 +228,7 @@
     <string name="show_sub">Etiqueta Sub</string>
     <string name="show_title">Título</string>
     <string name="poster_ui_settings">Alternar elementos da interface no póster</string>
-    <string name="no_update_found">Nenhuma Atualização Encontrada</string>
+    <string name="no_update_found">Você já está usando a versão mais recente</string>
     <string name="check_for_update">Procurar Atualização</string>
     <string name="video_lock">Fixar</string>
     <string name="video_aspect_ratio_resize">Mudar Tamanho</string>
