@@ -184,7 +184,14 @@ class PackageInstallerService : Service() {
     override fun onDestroy() {
         installer?.unregisterInstallActionReceiver()
         installer = null
-        this.stopSelf()
+        if (SDK_INT >= 24) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
+        (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
+            .cancel(UPDATE_NOTIFICATION_ID)
         super.onDestroy()
     }
 
