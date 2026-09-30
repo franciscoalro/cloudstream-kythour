@@ -1,7 +1,7 @@
 {
-  "versionCode": 29844840,
-  "versionName": "4.8.0-PRE Kythour Premium",
-  "apkUrl": "https://github.com/franciscoalro/kythourcl-dist/releases/download/app-v29844840/cloudstream-kythour-premium-29844840-debug.apk",
-  "changelog": "Versão inicial do CloudStream Kythour Premium. Novos builds serão publicados automaticamente neste repositório.",
-  "id": "app-v29844840"
+  "versionCode": 29845487,
+  "versionName": "4.8.0-PRE",
+  "apkUrl": "https://github.com/franciscoalro/cloudstream-kythour/releases/download/app-v29845487/cloudstream-kythour-premium-29845487-debug.apk",
+  "changelog": "Build automático do CloudStream Kythour Premium com plugins integrados e atualização remota.",
+  "id": "app-v29845487"
 }
