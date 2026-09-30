@@ -323,18 +323,8 @@ object InAppUpdater {
             return false
         }
 
-        // Automatic checks download through the foreground installer service.
-        // Android still presents its mandatory package-install confirmation.
-        if (checkAutoUpdate) {
-            val expected = update.expectedApk ?: return false
-            val intent = PackageInstallerService.getIntent(this, update.updateURL, expected)
-            ContextCompat.startForegroundService(this, intent)
-            runOnUiThread {
-                showToast(R.string.download_started, Toast.LENGTH_LONG)
-            }
-            return true
-        }
-
+        // Automatic checks only notify the user. Downloading must always require an
+        // explicit tap on Update, otherwise reopening the app restarts the download.
         runOnUiThread {
             safe {
                 val currentVersion = packageName?.let {
