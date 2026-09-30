@@ -1,10 +1,7 @@
 name: Fix locale issues
 
+# Run manually only in the Kythour fork.
 on:
-  push:
-    branches: [ master ]
-    paths:
-      - '**.xml'
   workflow_dispatch:
 
 concurrency:

@@ -1,12 +1,7 @@
 name: Archive build
 
+# Upstream archival workflow kept for reference; it needs private secrets.
 on:
-  push:
-    branches: [ master ]
-    paths-ignore:
-      - '*.md'
-      - '*.json'
-      - '**/wcokey.txt'
   workflow_dispatch:
 
 permissions:

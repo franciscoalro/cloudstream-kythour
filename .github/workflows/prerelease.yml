@@ -1,12 +1,9 @@
 name: Pre-release
 
+# Upstream workflow kept for reference; it needs private recloudstream secrets.
+# Automatic Kythour releases are handled by kythour-build.yml.
 on:
-  push:
-    branches: [ master ]
-    paths-ignore:
-      - '*.md'
-      - '*.json'
-      - '**/wcokey.txt'
+  workflow_dispatch:
 
 concurrency:
   group: "pre-release"
