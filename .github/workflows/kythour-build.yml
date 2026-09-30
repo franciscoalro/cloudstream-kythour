@@ -44,10 +44,13 @@ jobs:
           cp "$HOME/.android/debug.keystore" "$HOME/work/_temp/keystore/kythour-debug.keystore"
           chmod 600 "$HOME/.android/debug.keystore" "$HOME/work/_temp/keystore/kythour-debug.keystore"
 
-      - name: Validate Kotlin ABI and unit checks
+      - name: Validate Kotlin ABI and prerelease checks
+        env:
+          GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx2g\ -XX:MaxMetaspaceSize=768m\ -Dfile.encoding=UTF-8
         run: |
           chmod +x gradlew
-          ./gradlew :library:checkKotlinAbi check --stacktrace --no-daemon
+          ./gradlew :library:checkKotlinAbi --stacktrace --no-daemon
+          ./gradlew :app:lintPrereleaseDebug :app:testPrereleaseDebugUnitTest --stacktrace --no-daemon
 
       - name: Build prerelease debug APK
         env:
