@@ -18,6 +18,7 @@ import com.lagradost.cloudstream3.ui.BaseFragment
 import com.lagradost.cloudstream3.ui.settings.appLanguages
 import com.lagradost.cloudstream3.ui.settings.getCurrentLocale
 import com.lagradost.cloudstream3.ui.settings.nameNextToFlagEmoji
+import com.lagradost.cloudstream3.utils.DataStoreHelper
 import com.lagradost.cloudstream3.utils.UIHelper.fixSystemBarsPadding
 
 const val HAS_DONE_SETUP_KEY = "HAS_DONE_SETUP"
@@ -84,6 +85,9 @@ class SetupFragmentLanguage : BaseFragment<FragmentSetupLanguageBinding>(
                 }
 
                 skipBtt.setOnClickListener {
+                    if (DataStoreHelper.currentHomePage == null) {
+                        DataStoreHelper.currentHomePage = "CineGato"
+                    }
                     setKey(HAS_DONE_SETUP_KEY, true)
                     findNavController().navigate(R.id.navigation_home)
                 }

@@ -65,6 +65,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.io.File
 import java.io.InputStreamReader
+import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 // Different keys for local and not since local can be removed at any time without app knowing, hence the local are getting rebuilt on every app start
 const val PLUGINS_KEY = "PLUGINS_KEY"
@@ -764,6 +767,69 @@ object PluginManager {
     ): Boolean {
         val file = getPluginPath(activity, internalName, repositoryUrl)
         return downloadPlugin(activity, pluginUrl, pluginHash, internalName, file, loadPlugin)
+    }
+
+    /**
+     * Seeds an online extension from an APK asset without requiring network access.
+     * Existing extensions with the same or a newer version are preserved so that
+     * repository updates are never downgraded by a later app launch.
+     */
+    suspend fun installBundledOnlinePlugin(
+        context: Context,
+        repositoryUrl: String,
+        plugin: SitePlugin,
+        assetPath: String,
+    ): Boolean {
+        val file = getPluginPath(context, plugin.internalName, repositoryUrl)
+        val installed = getPluginsOnline().firstOrNull { it.filePath == file.absolutePath }
+        if (file.exists() && installed != null && installed.version >= plugin.version) {
+            return false
+        }
+
+        val parent = file.parentFile ?: return false
+        parent.mkdirs()
+        val temporary = File.createTempFile(file.name, ".tmp", context.cacheDir)
+
+        try {
+            context.assets.open(assetPath).use { input ->
+                temporary.outputStream().use { output -> input.copyTo(output) }
+            }
+
+            plugin.fileHash?.let { expectedHash ->
+                val actualHash = sha256(temporary)
+                check(actualHash == expectedHash) {
+                    "Bundled extension hash mismatch for ${plugin.internalName}: expected $expectedHash, got $actualHash"
+                }
+            }
+
+            try {
+                Files.move(
+                    temporary.toPath(),
+                    file.toPath(),
+                    StandardCopyOption.REPLACE_EXISTING,
+                    StandardCopyOption.ATOMIC_MOVE,
+                )
+            } catch (_: AtomicMoveNotSupportedException) {
+                Files.move(
+                    temporary.toPath(),
+                    file.toPath(),
+                    StandardCopyOption.REPLACE_EXISTING,
+                )
+            }
+
+            setPluginData(
+                PluginData(
+                    internalName = plugin.internalName,
+                    url = plugin.url,
+                    isOnline = true,
+                    filePath = file.absolutePath,
+                    version = plugin.version,
+                )
+            )
+            return true
+        } finally {
+            temporary.delete()
+        }
     }
 
     suspend fun downloadPlugin(

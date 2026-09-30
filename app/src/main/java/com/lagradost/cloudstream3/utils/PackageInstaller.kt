@@ -10,12 +10,9 @@ import android.content.IntentSender
 import android.content.pm.PackageInstaller
 import android.os.Build
 import android.util.Log
-import android.widget.Toast
 import com.lagradost.cloudstream3.CloudStreamApp.Companion.context
-import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.services.PackageInstallerService
-import com.lagradost.cloudstream3.utils.Coroutines.main
 import java.io.InputStream
 
 const val INSTALL_ACTION = "ApkInstaller.INSTALL_ACTION"
@@ -86,7 +83,9 @@ class ApkInstaller(private val service: PackageInstallerService) {
                 PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                installParams.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
+                // Kythour downloads updates automatically, but installation must
+                // always remain an explicit Android-controlled user decision.
+                installParams.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_REQUIRED)
             }
 
             activeSession = packageInstaller.createSession(installParams)
@@ -126,22 +125,10 @@ class ApkInstaller(private val service: PackageInstallerService) {
                 service, activeSession, installIntent, installFlags
             ).intentSender
 
-            // Use delayed installations on android 13 and only if "allow from unknown sources" is enabled
-            // if the app lacks installation permission it cannot ask for the permission when it's closed.
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-                context.packageManager.canRequestPackageInstalls()
-            ) {
-                // Save for later installation since it's more jarring to have the app exit abruptly
-                delayedInstaller = DelayedInstaller(session, intentSender)
-                main {
-                    // Use real toast since it should show even if app is exited
-                    Toast.makeText(context, R.string.delayed_update_notice, Toast.LENGTH_LONG)
-                        .show()
-                }
-            } else {
-                installProgressStatus.invoke(InstallProgressStatus.Installing)
-                session.commit(intentSender)
-            }
+            // Commit after the background download. Android's package installer
+            // then displays the required confirmation/unknown-sources UI.
+            installProgressStatus.invoke(InstallProgressStatus.Installing)
+            session.commit(intentSender)
         } catch (e: Exception) {
             logError(e)
 

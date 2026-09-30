@@ -40,6 +40,8 @@ import java.io.InputStreamReader
 object InAppUpdater {
     private const val GITHUB_USER_NAME = "recloudstream"
     private const val GITHUB_REPO = "cloudstream"
+    private const val KYTHOUR_UPDATE_MANIFEST =
+        "https://raw.githubusercontent.com/franciscoalro/kythourcl-dist/main/app-update.json"
 
     private const val PRERELEASE_PACKAGE_NAME = "com.lagradost.cloudstream3.prerelease"
     private const val LOG_TAG = "InAppUpdater"
@@ -83,18 +85,42 @@ object InAppUpdater {
         @JsonProperty("updateNodeId") @SerialName("updateNodeId") val updateNodeId: String?,
     )
 
+    @Serializable
+    private data class KythourUpdateManifest(
+        @JsonProperty("versionCode") @SerialName("versionCode") val versionCode: Long,
+        @JsonProperty("versionName") @SerialName("versionName") val versionName: String,
+        @JsonProperty("apkUrl") @SerialName("apkUrl") val apkUrl: String,
+        @JsonProperty("changelog") @SerialName("changelog") val changelog: String? = null,
+        @JsonProperty("id") @SerialName("id") val id: String? = null,
+    )
+
     private suspend fun Activity.getAppUpdate(installPrerelease: Boolean): Update {
         return try {
-            when {
-                // No updates on debug version
-                BuildConfig.DEBUG -> Update(false, null, null, null, null)
-                BuildConfig.FLAVOR == "prerelease" || installPrerelease -> getPreReleaseUpdate()
-                else -> getReleaseUpdate()
-            }
+            // The Kythour channel is intentionally checked even in debug builds:
+            // this fork is distributed as a separately installable debug package.
+            if (!installPrerelease) getKythourUpdate() else getPreReleaseUpdate()
         } catch (e: Exception) {
             Log.e(LOG_TAG, Log.getStackTraceString(e))
             Update(false, null, null, null, null)
         }
+    }
+
+    private suspend fun Activity.getKythourUpdate(): Update {
+        val manifest = parseJson<KythourUpdateManifest>(app.get(KYTHOUR_UPDATE_MANIFEST).text)
+        val currentVersionCode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            packageManager.getPackageInfo(packageName, 0).longVersionCode
+        } else {
+            @Suppress("DEPRECATION")
+            packageManager.getPackageInfo(packageName, 0).versionCode.toLong()
+        }
+        val updateId = manifest.id ?: "kythour-${manifest.versionCode}"
+        return Update(
+            shouldUpdate = manifest.versionCode > currentVersionCode && manifest.apkUrl.isNotBlank(),
+            updateURL = manifest.apkUrl,
+            updateVersion = manifest.versionName,
+            changelog = manifest.changelog,
+            updateNodeId = updateId,
+        )
     }
 
     private suspend fun Activity.getReleaseUpdate(): Update {
@@ -271,6 +297,17 @@ object InAppUpdater {
         // This allows updating manually
         if (update.updateNodeId.equals(updateNodeId) && checkAutoUpdate) {
             return false
+        }
+
+        // Automatic checks download through the foreground installer service.
+        // Android still presents its mandatory package-install confirmation.
+        if (checkAutoUpdate) {
+            val intent = PackageInstallerService.getIntent(this, update.updateURL)
+            ContextCompat.startForegroundService(this, intent)
+            runOnUiThread {
+                showToast(R.string.download_started, Toast.LENGTH_LONG)
+            }
+            return true
         }
 
         runOnUiThread {

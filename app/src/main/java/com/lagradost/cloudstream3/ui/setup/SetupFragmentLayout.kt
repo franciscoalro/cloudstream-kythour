@@ -11,6 +11,7 @@ import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.databinding.FragmentSetupLayoutBinding
 import com.lagradost.cloudstream3.mvvm.safe
 import com.lagradost.cloudstream3.ui.BaseFragment
+import com.lagradost.cloudstream3.utils.DataStoreHelper
 import com.lagradost.cloudstream3.utils.UIHelper.fixSystemBarsPadding
 
 class SetupFragmentLayout : BaseFragment<FragmentSetupLayoutBinding>(
@@ -52,6 +53,9 @@ class SetupFragmentLayout : BaseFragment<FragmentSetupLayoutBinding>(
                 }
 
                 nextBtt.setOnClickListener {
+                    if (DataStoreHelper.currentHomePage == null) {
+                        DataStoreHelper.currentHomePage = "CineGato"
+                    }
                     setKey(HAS_DONE_SETUP_KEY, true)
                     findNavController().navigate(R.id.navigation_home)
                 }

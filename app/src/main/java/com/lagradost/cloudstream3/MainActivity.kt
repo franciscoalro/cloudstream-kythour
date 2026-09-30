@@ -1358,6 +1358,17 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         } else if (lastError == null) {
             ioSafe {
+                // Seed the bundled providers before selecting the homepage so a
+                // clean install can immediately open CineGato, even while offline.
+                com.lagradost.cloudstream3.plugins.KythourBootstrap.installBundledPlugins(
+                    this@MainActivity
+                )
+                if (getKey<Boolean>(HAS_DONE_SETUP_KEY, false) != true &&
+                    DataStoreHelper.currentHomePage == null
+                ) {
+                    DataStoreHelper.currentHomePage = "CineGato"
+                }
+
                 DataStoreHelper.currentHomePage?.let { homeApi ->
                     mainPluginsLoadedEvent.invoke(loadSinglePlugin(this@MainActivity, homeApi))
                 } ?: run {

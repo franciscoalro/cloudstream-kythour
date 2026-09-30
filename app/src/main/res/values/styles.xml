@@ -5,7 +5,9 @@
         <item name="android:colorEdgeEffect">?attr/textColor</item>
 
         <item name="android:navigationBarColor">?attr/primaryBlackBackground</item>
-        <item name="android:statusBarColor">?attr/iconGrayBackground</item>
+        <item name="android:statusBarColor">?attr/primaryBlackBackground</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
 
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:windowTranslucentNavigation">false</item>
@@ -671,6 +673,14 @@
         <item name="android:textStyle">bold</item>
     </style>
 
+    <!-- Scoped to the home feed so player and settings typography remain unchanged. -->
+    <style name="PremiumHomeSectionTitle" parent="@style/WatchHeaderText">
+        <item name="android:minHeight">48dp</item>
+        <item name="android:textSize">19sp</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="android:textColor">?attr/textColor</item>
+    </style>
+
     <style name="SearchBox">
         <item name="android:background">@drawable/bg_color_both</item>
         <item name="android:minWidth">40dp</item>
@@ -819,7 +829,7 @@
     </style>
 
     <style name="ExtendedFloatingActionButton">
-        <item name="elevation">0dp</item>
+        <item name="elevation">4dp</item>
         <item name="android:textStyle">bold</item>
         <item name="backgroundTint">?attr/primaryGrayBackground</item>
         <item name="tint">?attr/colorPrimary</item>
