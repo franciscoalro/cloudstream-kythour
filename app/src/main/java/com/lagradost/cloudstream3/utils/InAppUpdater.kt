@@ -305,6 +305,11 @@ object InAppUpdater {
 
         val update = getAppUpdate(installPrerelease)
         if (!update.shouldUpdate || update.updateURL == null) {
+            // A manual check must always give feedback. Automatic checks stay silent so
+            // opening the app does not produce an unnecessary notification or toast.
+            if (!checkAutoUpdate && !installPrerelease) {
+                runOnUiThread { showToast(R.string.no_update_found) }
+            }
             return false
         }
         if (!installPrerelease && update.expectedApk == null) {
