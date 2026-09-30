@@ -56,6 +56,27 @@ jobs:
           chmod +x gradlew
           ./gradlew assemblePrereleaseDebug --stacktrace --no-daemon
 
+      - name: Sign APK with stable key
+        env:
+          SIGNING_STORE_FILE: ${{ github.workspace }}/kythour-debug.keystore
+          SIGNING_KEY_ALIAS: androiddebugkey
+          SIGNING_KEY_PASSWORD: android
+          SIGNING_STORE_PASSWORD: android
+        run: |
+          set -euo pipefail
+          APK="$(find app/build/outputs/apk/prerelease/debug -name '*.apk' -type f -print -quit)"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)"
+          test -n "$APK"
+          test -x "$APKSIGNER"
+          "$APKSIGNER" sign \
+            --ks "$SIGNING_STORE_FILE" \
+            --ks-key-alias "$SIGNING_KEY_ALIAS" \
+            --ks-pass "pass:$SIGNING_STORE_PASSWORD" \
+            --key-pass "pass:$SIGNING_KEY_PASSWORD" \
+            --out "$APK.signed" \
+            "$APK"
+          mv "$APK.signed" "$APK"
+
       - name: Validate and describe APK
         id: apk
         shell: bash
