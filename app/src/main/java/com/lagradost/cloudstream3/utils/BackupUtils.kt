@@ -47,6 +47,7 @@ import java.lang.System.currentTimeMillis
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.security.MessageDigest
 
 object BackupUtils {
 
@@ -113,6 +114,10 @@ object BackupUtils {
         "auto_download_plugins_key2"
     )
 
+    private const val ACCOUNTS_KEY = "data_store_helper/account"
+    private const val BACKUP_SCHEMA_VERSION = 2
+    private const val MAX_BACKUP_BYTES = 25L * 1024L * 1024L
+
     /** false if key should not be contained in backup */
     private fun String.isTransferable(): Boolean {
         return !nonTransferableKeys.any { this.contains(it) }
@@ -135,11 +140,43 @@ object BackupUtils {
     data class BackupFile(
         @JsonProperty("datastore") @SerialName("datastore") val datastore: BackupVars,
         @JsonProperty("settings") @SerialName("settings") val settings: BackupVars,
+        @JsonProperty("schemaVersion") @SerialName("schemaVersion") val schemaVersion: Int = 1,
+        @JsonProperty("createdAt") @SerialName("createdAt") val createdAt: Long? = null,
+        @JsonProperty("checksum") @SerialName("checksum") val checksum: String? = null,
     )
+
+    private fun BackupFile.withoutChecksum() = copy(checksum = null)
+
+    private fun BackupFile.calculateChecksum(): String = MessageDigest.getInstance("SHA-256")
+        .digest(withoutChecksum().toJson().toByteArray(Charsets.UTF_8))
+        .joinToString("") { "%02x".format(it) }
+
+    private fun sanitizeAccounts(serialized: String): String =
+        parseJson<Array<DataStoreHelper.Account>>(serialized)
+            .map { it.copy(lockPin = null) }
+            .toTypedArray()
+            .toJson()
+
+    private fun BackupFile.validate() {
+        if (schemaVersion !in 1..BACKUP_SCHEMA_VERSION) {
+            throw IOException("Unsupported backup schema: $schemaVersion")
+        }
+        checksum?.let { expected ->
+            if (!expected.equals(calculateChecksum(), ignoreCase = true)) {
+                throw IOException("Backup integrity check failed")
+            }
+        }
+    }
 
     @Suppress("UNCHECKED_CAST")
     private fun getBackup(context: Context): BackupFile {
-        val allData = context.getSharedPrefs().all.filter { it.key.isTransferable() }
+        val rawData = context.getSharedPrefs().all
+        val accountsWithoutPins = (rawData[ACCOUNTS_KEY] as? String)?.let { serialized ->
+            runCatching { sanitizeAccounts(serialized) }.getOrNull()
+        }
+        val allData = rawData.filter { it.key.isTransferable() }.toMutableMap().apply {
+            accountsWithoutPins?.let { put(ACCOUNTS_KEY, it) }
+        }
         val allSettings = context.getDefaultSharedPrefs().all.filter { it.key.isTransferable() }
 
         val allDataSorted = BackupVars(
@@ -160,10 +197,13 @@ object BackupUtils {
             allSettings.filter { it.value as? Set<String> != null } as? Map<String, Set<String>>,
         )
 
-        return BackupFile(
-            allDataSorted,
-            allSettingsSorted,
+        val backup = BackupFile(
+            datastore = allDataSorted,
+            settings = allSettingsSorted,
+            schemaVersion = BACKUP_SCHEMA_VERSION,
+            createdAt = currentTimeMillis(),
         )
+        return backup.copy(checksum = backup.calculateChecksum())
     }
 
     @WorkerThread
@@ -173,7 +213,8 @@ object BackupUtils {
         restoreSettings: Boolean,
         restoreDataStore: Boolean,
     ) {
-        if (context == null) return
+        if (context == null) throw IOException("Missing restore context")
+        backupFile.validate()
         if (restoreSettings) {
             context.restoreMap(backupFile.settings.bool, true)
             context.restoreMap(backupFile.settings.int, true)
@@ -258,8 +299,22 @@ object BackupUtils {
                             val input = activity.contentResolver.openInputStream(uri)
                                 ?: return@ioSafe
 
-                            val text = input.bufferedReader().readText()
-                            val restoredValue = parseJson<BackupFile>(text)
+                            val text = input.bufferedReader().use { reader ->
+                                val output = StringBuilder()
+                                val buffer = CharArray(8192)
+                                var total = 0L
+                                while (true) {
+                                    val count = reader.read(buffer)
+                                    if (count < 0) break
+                                    total += count
+                                    if (total > MAX_BACKUP_BYTES) {
+                                        throw IOException("Backup exceeds maximum supported size")
+                                    }
+                                    output.append(buffer, 0, count)
+                                }
+                                output.toString()
+                            }
+                            val restoredValue = parseJson<BackupFile>(text).also { it.validate() }
 
                             restore(
                                 activity,
@@ -311,7 +366,14 @@ object BackupUtils {
         val editor = DataStore.editor(this, isEditingAppSettings)
         map?.forEach {
             if (it.key.isTransferable()) {
-                editor.setKeyRaw(it.key, it.value)
+                val value = if (it.key == ACCOUNTS_KEY && it.value is String) {
+                    runCatching { sanitizeAccounts(it.value) }.getOrElse {
+                        throw IOException("Invalid account profiles in backup", it)
+                    }
+                } else {
+                    it.value
+                }
+                editor.setKeyRaw(it.key, value)
             }
         }
         editor.apply()

@@ -22,6 +22,8 @@ import com.lagradost.cloudstream3.utils.Coroutines.runOnMainThread
 import com.lagradost.cloudstream3.utils.SubtitleHelper.getFlagFromIso
 import com.lagradost.cloudstream3.utils.TestingUtils
 import java.io.File
+import java.text.DateFormat
+import java.util.Date
 
 class TestResultAdapter() :
     NoStateAdapter<Pair<MainAPI, TestingUtils.TestResultProvider>>(
@@ -89,12 +91,19 @@ class TestResultAdapter() :
         val stackTrace = result.exception?.getStackTracePretty(false)?.ifBlank { null }
         val messages = result.exception?.getAllMessages()?.ifBlank { null }
         val resultLog = result.log.joinToString("\n")
+        val stageSummary = result.stages.joinToString(" • ") { stage ->
+            "${stage.name}: ${stage.durationMs} ms${if (stage.success) "" else " ✕"}"
+        }
+        val testedAt = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+            .format(Date(result.testedAt))
+        val diagnosticSummary = listOf(stageSummary, testedAt).filter { it.isNotBlank() }
+            .joinToString("\n")
         val fullLog =
-            resultLog +
+            diagnosticSummary + "\n\n" + resultLog +
                     (messages?.let { "\n\nError: $it" } ?: "") +
                     (stackTrace?.let { "\n\n$it" } ?: "")
 
-        failDescription.text = messages?.lastLine() ?: resultLog.lastLine()
+        failDescription.text = messages?.lastLine() ?: stageSummary.ifBlank { resultLog.lastLine() }
 
         logButton.setOnClickListener {
             val builder: AlertDialog.Builder =

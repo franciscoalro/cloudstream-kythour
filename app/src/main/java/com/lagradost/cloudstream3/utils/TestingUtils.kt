@@ -56,12 +56,19 @@ object TestingUtils {
     class TestResultList(val results: List<SearchResponse>) : TestResult(true)
     class TestResultLoad(val extractorData: String, val shouldLoadLinks: Boolean) : TestResult(true)
 
+    data class StageResult(
+        val name: String,
+        val durationMs: Long,
+        val success: Boolean,
+    )
+
     class TestResultProvider(
         success: Boolean,
         val log: List<Logger.Message>,
-        val exception: Throwable?
-    ) :
-        TestResult(success)
+        val exception: Throwable?,
+        val stages: List<StageResult> = emptyList(),
+        val testedAt: Long = System.currentTimeMillis(),
+    ) : TestResult(success)
 
     @Throws(AssertionError::class, CancellationException::class)
     suspend fun testHomepage(
@@ -274,12 +281,24 @@ object TestingUtils {
         providers.forEach { api ->
             scope.launch {
                 val logger = Logger()
+                val stages = mutableListOf<StageResult>()
+                suspend fun <T> runStage(name: String, block: suspend () -> T): T {
+                    val startedAt = System.currentTimeMillis()
+                    return try {
+                        block().also {
+                            stages += StageResult(name, System.currentTimeMillis() - startedAt, true)
+                        }
+                    } catch (error: Throwable) {
+                        stages += StageResult(name, System.currentTimeMillis() - startedAt, false)
+                        throw error
+                    }
+                }
 
                 val result = try {
                     logger.log("Trying ${api.name}")
 
                     // Test Homepage
-                    val homepage = testHomepage(api, logger)
+                    val homepage = runStage("Homepage") { testHomepage(api, logger) }
                     assertTrue("Homepage failed to load", homepage.success)
                     val homePageList = (homepage as? TestResultList)?.results ?: emptyList()
 
@@ -290,7 +309,9 @@ object TestingUtils {
                                 // If home page is sparse then use generic search queries
                                 listOf("over", "iron", "guy")).take(3)
 
-                    val searchResults = testSearch(api, searchQueries, logger)
+                    val searchResults = runStage("Search") {
+                        testSearch(api, searchQueries, logger)
+                    }
                     assertTrue("Failed to get search results", searchResults.success)
                     searchResults as TestResultList
 
@@ -298,28 +319,30 @@ object TestingUtils {
                     // Only try the first 3 search results to prevent spamming
                     val success = searchResults.results.take(3).any { searchResponse ->
                         logger.log("Testing search result: ${searchResponse.url}")
-                        val loadResponse = testLoad(api, searchResponse, logger)
+                        val loadResponse = runStage("Load") {
+                            testLoad(api, searchResponse, logger)
+                        }
                         if (loadResponse !is TestResultLoad) {
                             false
+                        } else if (loadResponse.shouldLoadLinks) {
+                            runStage("Links") {
+                                testLinkLoading(api, loadResponse.extractorData, logger)
+                            }.success
                         } else {
-                            if (loadResponse.shouldLoadLinks) {
-                                testLinkLoading(api, loadResponse.extractorData, logger).success
-                            } else {
-                                logger.log("Skipping link loading test")
-                                true
-                            }
+                            logger.log("Skipping link loading test")
+                            true
                         }
                     }
 
                     if (success) {
                         logger.log("Success ${api.name}")
-                        TestResultProvider(true, logger.getRawLog(), null)
+                        TestResultProvider(true, logger.getRawLog(), null, stages.toList())
                     } else {
                         logger.error("Link loading failed")
-                        TestResultProvider(false, logger.getRawLog(), null)
+                        TestResultProvider(false, logger.getRawLog(), null, stages.toList())
                     }
                 } catch (e: Throwable) {
-                    TestResultProvider(false, logger.getRawLog(), e)
+                    TestResultProvider(false, logger.getRawLog(), e, stages.toList())
                 }
                 callback.invoke(api, result)
             }
