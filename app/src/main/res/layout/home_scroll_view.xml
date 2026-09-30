@@ -15,7 +15,7 @@
     <View
         android:id="@+id/title_shadow_top"
         android:layout_width="match_parent"
-        android:layout_height="150dp"
+        android:layout_height="190dp"
         android:layout_gravity="top"
         android:alpha="1"
         android:background="@drawable/background_shadow"
@@ -25,7 +25,7 @@
     <View
         android:id="@+id/title_shadow"
         android:layout_width="match_parent"
-        android:layout_height="300dp"
+        android:layout_height="360dp"
         android:layout_gravity="bottom"
         android:background="@drawable/background_shadow" />
 
@@ -54,7 +54,12 @@
             android:paddingHorizontal="30dp"
             android:paddingBottom="10dp"
             android:textColor="?attr/white"
-            android:textSize="17sp"
+            android:letterSpacing="0.01"
+            android:shadowColor="#D0090B10"
+            android:shadowDx="0"
+            android:shadowDy="2"
+            android:shadowRadius="6"
+            android:textSize="22sp"
             android:textStyle="bold"
             tools:text="The Perfect Run" />
         <!--<TextView
@@ -75,8 +80,9 @@
             android:gravity="center"
             android:paddingStart="30dp"
             android:paddingEnd="30dp"
+            android:alpha="0.86"
             android:textColor="?attr/white"
-            android:textSize="14sp"
+            android:textSize="13sp"
             tools:text="Hello • World • Tags" />
     </LinearLayout>
 
