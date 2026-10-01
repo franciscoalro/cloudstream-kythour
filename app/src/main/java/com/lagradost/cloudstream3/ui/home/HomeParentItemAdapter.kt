@@ -52,6 +52,9 @@ open class ParentItemAdapter(
     }
 
     data class ParentItemHolder(val binding: ViewBinding) : ViewHolderState<Bundle>(binding) {
+        var expandListener: RecyclerView.OnScrollListener? = null
+        var expandName: String? = null
+        var expandedCount: Int = 0
         override fun save(): Bundle = Bundle().apply {
             val recyclerView = (binding as? HomepageParentBinding)?.homeChildRecyclerview
             putParcelable(
@@ -66,6 +69,15 @@ open class ParentItemAdapter(
                 state.getSafeParcelable<Parcelable>("value")
             )
         }
+    }
+
+    override fun onClearView(holder: ViewHolderState<Bundle>) {
+        val parent = holder as? ParentItemHolder ?: return
+        val binding = parent.binding as? HomepageParentBinding ?: return
+        parent.expandListener?.let(binding.homeChildRecyclerview::removeOnScrollListener)
+        parent.expandListener = null
+        parent.expandName = null
+        parent.expandedCount = 0
     }
 
     override fun submitList(
@@ -90,6 +102,7 @@ open class ParentItemAdapter(
         item: HomeViewModel.ExpandableHomepageList,
         position: Int
     ) {
+        val parentHolder = holder as? ParentItemHolder ?: return
         val startFocus = R.id.nav_rail_view
         val endFocus = FOCUS_SELF
         val binding = holder.view
@@ -127,36 +140,25 @@ open class ParentItemAdapter(
             )
             homeChildMoreInfo.text = info.name
 
-            homeChildRecyclerview.addOnScrollListener(object :
-                RecyclerView.OnScrollListener() {
-                var expandCount = 0
-                val name = item.list.name
-
+            parentHolder.expandListener?.let(homeChildRecyclerview::removeOnScrollListener)
+            parentHolder.expandName = item.list.name
+            parentHolder.expandedCount = 0
+            parentHolder.expandListener = object : RecyclerView.OnScrollListener() {
                 override fun onScrollStateChanged(
                     recyclerView: RecyclerView,
                     newState: Int
                 ) {
                     super.onScrollStateChanged(recyclerView, newState)
-
-                    val adapter = recyclerView.adapter
-                    if (adapter !is HomeChildItemAdapter) return
-
+                    val adapter = recyclerView.adapter as? HomeChildItemAdapter ?: return
                     val count = adapter.itemCount
-                    val hasNext = adapter.hasNext
-                    /*println(
-                        "scolling ${recyclerView.isRecyclerScrollable()} ${
-                            recyclerView.canScrollHorizontally(
-                                1
-                            )
-                        }"
-                    )*/
-                    //!recyclerView.canScrollHorizontally(1)
-                    if (!recyclerView.isRecyclerScrollable() && hasNext && expandCount != count) {
-                        expandCount = count
-                        expandCallback?.invoke(name)
+                    if (!recyclerView.isRecyclerScrollable() && adapter.hasNext &&
+                        parentHolder.expandedCount != count
+                    ) {
+                        parentHolder.expandedCount = count
+                        parentHolder.expandName?.let { expandCallback?.invoke(it) }
                     }
                 }
-            })
+            }.also(homeChildRecyclerview::addOnScrollListener)
 
             //(recyclerView.adapter as HomeChildItemAdapter).notifyDataSetChanged()
             if (isLayout(PHONE or EMULATOR)) {
