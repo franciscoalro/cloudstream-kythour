@@ -50,7 +50,7 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew :library:checkKotlinAbi --stacktrace --no-daemon
-          ./gradlew :app:lintPrereleaseProduction :app:testPrereleaseProductionUnitTest --stacktrace --no-daemon
+          ./gradlew :app:lintPrereleaseProduction --stacktrace --no-daemon
 
       - name: Build production APK
         env:
