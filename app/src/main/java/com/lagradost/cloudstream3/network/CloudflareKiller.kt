@@ -4,6 +4,7 @@ import android.util.Log
 import android.webkit.CookieManager
 import androidx.annotation.AnyThread
 import com.lagradost.cloudstream3.app
+import com.lagradost.cloudstream3.CloudStreamApp
 import com.lagradost.cloudstream3.mvvm.debugWarning
 import com.lagradost.cloudstream3.mvvm.safe
 import com.lagradost.nicehttp.Requests.Companion.await
@@ -14,12 +15,14 @@ import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
 import java.net.URI
+import java.util.concurrent.ConcurrentHashMap
 
 
 @AnyThread
 class CloudflareKiller : Interceptor {
     companion object {
         const val TAG = "CloudflareKiller"
+        private const val COOKIE_PREFS = "provider_cookie_jar"
         private val ERROR_CODES = listOf(403, 503)
         private val CLOUDFLARE_SERVERS = listOf("cloudflare-nginx", "cloudflare")
         fun parseCookieMap(cookie: String): Map<String, String> {
@@ -31,14 +34,31 @@ class CloudflareKiller : Interceptor {
     }
 
     init {
-        // Needs to clear cookies between sessions to generate new cookies.
-        safe {
-            // This can throw an exception on unsupported devices :(
-            CookieManager.getInstance().removeAllCookies(null)
-        }
     }
 
-    val savedCookies: MutableMap<String, Map<String, String>> = mutableMapOf()
+    val savedCookies: MutableMap<String, Map<String, String>> =
+        ConcurrentHashMap(loadPersistedCookies().toMutableMap())
+
+    private fun loadPersistedCookies(): Map<String, Map<String, String>> = safe {
+        val context = CloudStreamApp.context ?: return@safe emptyMap()
+        val preferences = context.getSharedPreferences(COOKIE_PREFS, android.content.Context.MODE_PRIVATE)
+        preferences.all.mapNotNull { (host, value) ->
+            val encoded = value as? String ?: return@mapNotNull null
+            host to parseCookieMap(encoded)
+        }.toMap()
+    } ?: emptyMap()
+
+    private fun persistCookies(host: String, cookies: Map<String, String>) {
+        val context = CloudStreamApp.context ?: return
+        context.getSharedPreferences(COOKIE_PREFS, android.content.Context.MODE_PRIVATE)
+            .edit().putString(host, cookies.entries.joinToString(";") { "${it.key}=${it.value}" }).apply()
+    }
+
+    fun clearPersistedCookies() {
+        savedCookies.clear()
+        CloudStreamApp.context?.getSharedPreferences(COOKIE_PREFS, android.content.Context.MODE_PRIVATE)
+            ?.edit()?.clear()?.apply()
+    }
 
     /**
      * Gets the headers with cookies, webview user agent included!
@@ -90,7 +110,11 @@ class CloudflareKiller : Interceptor {
         // Not sure if this takes expiration into account
         return getWebViewCookie(request.url.toString())?.let { cookie ->
             cookie.contains("cf_clearance").also { solved ->
-                if (solved) savedCookies[request.url.host] = parseCookieMap(cookie)
+                if (solved) {
+                    val parsed = parseCookieMap(cookie)
+                    savedCookies[request.url.host] = parsed
+                    persistCookies(request.url.host, parsed)
+                }
             }
         } ?: false
     }
