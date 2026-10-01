@@ -2,11 +2,13 @@ package com.lagradost.cloudstream3.utils
 
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
 import com.google.android.ump.ConsentInformation
 import com.google.android.ump.ConsentRequestParameters
@@ -29,10 +31,12 @@ object AdsManager {
         val information = UserMessagingPlatform.getConsentInformation(activity)
         val params = ConsentRequestParameters.Builder().build()
         information.requestConsentInfoUpdate(activity, params, {
-            UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { _ ->
+            UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { error ->
+                if (error != null) Log.w("KAPlayAds", "Consent form unavailable: ${error.message}")
                 finishConsent(activity.applicationContext, information)
             }
-        }, { _ ->
+        }, { error ->
+            Log.w("KAPlayAds", "Consent update failed: ${error.message}")
             // If the consent endpoint is temporarily unavailable, only request ads
             // when UMP says it is already permitted.
             finishConsent(activity.applicationContext, information)
@@ -72,6 +76,16 @@ object AdsManager {
         val adView = AdView(context).apply {
             setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, 360))
             adUnitId = if (BuildConfig.DEBUG) TEST_BANNER_ID else BANNER_ID
+            adListener = object : com.google.android.gms.ads.AdListener() {
+                override fun onAdLoaded() {
+                    Log.i("KAPlayAds", "Banner loaded: $adUnitId")
+                }
+
+                override fun onAdFailedToLoad(error: LoadAdError) {
+                    Log.w("KAPlayAds", "Banner failed: ${error.code} ${error.message}")
+                    container.visibility = View.GONE
+                }
+            }
             loadAd(AdRequest.Builder().build())
         }
         container.removeAllViews()
