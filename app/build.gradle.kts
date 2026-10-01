@@ -157,9 +157,6 @@ android {
         debug {
             isDebuggable = true
             applicationIdSuffix = ".debug"
-            // Android's debug build type otherwise prefers its generated debug
-            // keystore over the flavor signing config. Explicitly reuse the
-            // stable Kythour key so GitHub APKs remain update-compatible.
             if (signingConfigs.names.contains("prerelease")) {
                 signingConfig = signingConfigs.getByName("prerelease")
             }
@@ -167,6 +164,18 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        // Production-signed build that keeps the existing prerelease.debug
+        // application ID for seamless updates, but sets BuildConfig.DEBUG=false
+        // so the real AdMob banner unit is selected.
+        create("production") {
+            initWith(getByName("release"))
+            isDebuggable = false
+            applicationIdSuffix = ".debug"
+            matchingFallbacks += listOf("release")
+            if (signingConfigs.names.contains("prerelease")) {
+                signingConfig = signingConfigs.getByName("prerelease")
+            }
         }
     }
 

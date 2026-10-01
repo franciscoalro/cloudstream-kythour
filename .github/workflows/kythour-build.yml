@@ -1,4 +1,4 @@
-name: Build Kythour APK
+name: Build Kythour Production APK
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       publish_release:
-        description: Publish APK as a GitHub pre-release
+        description: Publish production APK as a GitHub release
         required: true
         default: true
         type: boolean
@@ -34,7 +34,7 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      - name: Restore stable debug signing key
+      - name: Restore production signing key
         env:
           DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
         run: |
@@ -44,15 +44,15 @@ jobs:
           cp "$HOME/.android/debug.keystore" "$HOME/work/_temp/keystore/kythour-debug.keystore"
           chmod 600 "$HOME/.android/debug.keystore" "$HOME/work/_temp/keystore/kythour-debug.keystore"
 
-      - name: Validate Kotlin ABI and prerelease checks
+      - name: Validate Kotlin ABI and production checks
         env:
           GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx2g\ -XX:MaxMetaspaceSize=768m\ -Dfile.encoding=UTF-8
         run: |
           chmod +x gradlew
           ./gradlew :library:checkKotlinAbi --stacktrace --no-daemon
-          ./gradlew :app:lintPrereleaseDebug :app:testPrereleaseDebugUnitTest --stacktrace --no-daemon
+          ./gradlew :app:lintPrereleaseProduction :app:testPrereleaseProductionUnitTest --stacktrace --no-daemon
 
-      - name: Build prerelease debug APK
+      - name: Build production APK
         env:
           SIGNING_STORE_FILE: ${{ github.workspace }}/kythour-debug.keystore
           SIGNING_KEY_ALIAS: androiddebugkey
@@ -62,7 +62,7 @@ jobs:
           cp "$HOME/.android/debug.keystore" "$SIGNING_STORE_FILE"
           chmod 600 "$SIGNING_STORE_FILE"
           chmod +x gradlew
-          ./gradlew assemblePrereleaseDebug --stacktrace --no-daemon
+          ./gradlew assemblePrereleaseProduction --stacktrace --no-daemon
 
       - name: Sign APK with stable key
         env:
@@ -72,7 +72,7 @@ jobs:
           SIGNING_STORE_PASSWORD: android
         run: |
           set -euo pipefail
-          APK="$(find app/build/outputs/apk/prerelease/debug -name '*.apk' -type f -print -quit)"
+          APK="$(find app/build/outputs/apk/prerelease/production -name '*.apk' -type f -print -quit)"
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)"
           test -n "$APK"
           test -x "$APKSIGNER"
@@ -90,7 +90,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          APK="$(find app/build/outputs/apk/prerelease/debug -name '*.apk' -type f -print -quit)"
+          APK="$(find app/build/outputs/apk/prerelease/production -name '*.apk' -type f -print -quit)"
           test -n "$APK"
           AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)"
           test -x "$AAPT"
@@ -106,7 +106,7 @@ jobs:
           test "$PACKAGE_NAME" = 'com.lagradost.cloudstream3.prerelease.debug'
           test "$CERT_SHA256" = "$EXPECTED_CERT_SHA256"
           test -n "$VERSION_CODE"
-          OUT="cloudstream-kythour-premium-${VERSION_CODE}-debug.apk"
+          OUT="kaplay-production-${VERSION_CODE}.apk"
           cp "$APK" "$OUT"
           APK_SHA256="$(sha256sum "$OUT" | tee "${OUT}.sha256" | cut -d' ' -f1)"
           echo "path=$OUT" >> "$GITHUB_OUTPUT"
@@ -140,7 +140,7 @@ jobs:
             --target "$GITHUB_SHA" \
             --title "CloudStream Kythour $VERSION_NAME" \
             --notes "Build automático do CloudStream Kythour Premium. A instalação continua exigindo confirmação explícita do Android." \
-            --prerelease
+            --latest
 
       - name: Publish update manifest
         if: github.event_name == 'push' || inputs.publish_release
