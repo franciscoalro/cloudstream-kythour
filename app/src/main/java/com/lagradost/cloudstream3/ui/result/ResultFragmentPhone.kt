@@ -332,6 +332,7 @@ open class ResultFragmentPhone : BaseFragment<FragmentResultSwipeBinding>(
     }
 
     override fun onDestroyView() {
+        resultBinding?.resultEpisodesAdContainer?.let(AdsManager::detachBanner)
         PanelsChildGestureRegionObserver.Provider.get().let { obs ->
             resultBinding?.resultCastItems?.let {
                 obs.unregister(it)

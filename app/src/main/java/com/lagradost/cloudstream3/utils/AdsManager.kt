@@ -46,10 +46,12 @@ object AdsManager {
     private fun finishConsent(context: Context, information: ConsentInformation) {
         if (information.canRequestAds()) {
             initialize(context)
-            synchronized(pendingContainers) {
-                pendingContainers.mapNotNull { it.get() }.forEach { loadBanner(context, it) }
+            val containers = synchronized(pendingContainers) {
+                val ready = pendingContainers.mapNotNull { it.get() }
                 pendingContainers.clear()
+                ready
             }
+            containers.forEach { loadBanner(context, it) }
         }
     }
 
@@ -57,6 +59,15 @@ object AdsManager {
         if (initialized) return
         initialized = true
         MobileAds.initialize(context)
+    }
+
+    fun detachBanner(container: FrameLayout) {
+        synchronized(pendingContainers) {
+            pendingContainers.removeAll { it.get() == null || it.get() === container }
+        }
+        container.findAdViews().forEach { it.destroy() }
+        container.removeAllViews()
+        container.visibility = View.GONE
     }
 
     fun attachBanner(context: Context, container: FrameLayout) {
@@ -70,6 +81,9 @@ object AdsManager {
         initialize(context)
         loadBanner(context, container)
     }
+
+    private fun FrameLayout.findAdViews(): List<AdView> =
+        (0 until childCount).mapNotNull { getChildAt(it) as? AdView }
 
     private fun loadBanner(context: Context, container: FrameLayout) {
         if (container.visibility == View.VISIBLE && container.childCount > 0) return

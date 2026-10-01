@@ -258,8 +258,9 @@ class HomeViewModel : ViewModel() {
                                     "Expanded contained an item that was previously already in the list\n${list.name} = ${this.list.list}\n${newList.name} = ${newList.list}"
                                 }
 
-                                this.list.list += newList.list
-                                this.list.list.distinctBy { it.url } // just to be sure we are not adding the same shit for some reason
+                                this.list.list = CopyOnWriteArrayList(
+                                    (this.list.list + newList.list).distinctBy { it.url }
+                                )
                             } ?: debugWarning {
                                 "Expanded an item not in main load named $key, current list is ${expandable.keys}"
                             }

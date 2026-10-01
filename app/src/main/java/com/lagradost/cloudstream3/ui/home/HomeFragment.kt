@@ -615,6 +615,7 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>(
     }
 
     override fun onDestroyView() {
+        binding?.homeMoviesAdContainer?.let(AdsManager::detachBanner)
         (activity as? ComponentActivity)?.detachBackPressedCallback("HomeFragment_BackPress")
         bottomSheetDialog?.ownHide()
         super.onDestroyView()
