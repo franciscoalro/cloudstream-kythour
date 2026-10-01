@@ -22,6 +22,7 @@ import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setTool
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setUpToolbar
 import com.lagradost.cloudstream3.ui.subtitles.ChromecastSubtitlesFragment
 import com.lagradost.cloudstream3.ui.subtitles.SubtitlesFragment
+import com.lagradost.cloudstream3.network.CloudflareKiller
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
 import com.lagradost.cloudstream3.utils.Qualities
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showBottomDialog
@@ -319,6 +320,7 @@ class SettingsPlayer : BasePreferenceFragmentCompat() {
             pref.setOnPreferenceClickListener {
                 try {
                     cacheDir.deleteRecursively()
+                     CloudflareKiller.clearPersistedCookies()
                     updateSummary()
                 } catch (e: Exception) {
                     logError(e)
