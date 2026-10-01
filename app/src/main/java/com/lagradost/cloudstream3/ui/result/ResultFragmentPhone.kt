@@ -1467,8 +1467,8 @@ open class ResultFragmentPhone : BaseFragment<FragmentResultSwipeBinding>(
                 }
                 resultBinding?.apply {
                     resultRecommendationsBtt.nextFocusDownId = nextFocusDown
-                    resultSearch.nextFocusDownId = nextFocusDown
-                    resultOpenInBrowser.nextFocusDownId = nextFocusDown
+                    resultShare.nextFocusDownId = nextFocusDown
+                    resultShare.nextFocusDownId = nextFocusDown
                     resultShare.nextFocusDownId = nextFocusDown
                 }
             }
