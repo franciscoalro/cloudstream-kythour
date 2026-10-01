@@ -1,11 +1,11 @@
 {
-  "versionCode": 29847004,
+  "versionCode": 29847050,
   "versionName": "4.8.0-PRE",
-  "apkUrl": "https://github.com/franciscoalro/cloudstream-kythour/releases/download/app-v29847004/cloudstream-kythour-premium-29847004-debug.apk",
+  "apkUrl": "https://github.com/franciscoalro/cloudstream-kythour/releases/download/app-v29847050/cloudstream-kythour-premium-29847050-debug.apk",
   "changelog": "Build automático do CloudStream Kythour Premium com plugins integrados e atualização remota.",
-  "id": "app-v29847004",
+  "id": "app-v29847050",
   "packageName": "com.lagradost.cloudstream3.prerelease.debug",
-  "sha256": "abaac6339fd22504c764817cf90192feb8ed715b01967db8c6fcfe7733f16d10",
+  "sha256": "c61177806988fad03ef8b169d337fafc538519b0f863006bb967019f249da4d7",
   "certificateSha256": "42931699f937b2a2c68da3101c955088ec564cc9aa568f65586e04dcb555ee4f",
-  "size": 91985918
+  "size": 91990014
 }
