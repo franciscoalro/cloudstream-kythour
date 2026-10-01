@@ -15,6 +15,10 @@ import com.google.android.ump.ConsentRequestParameters
 import com.google.android.ump.UserMessagingPlatform
 import com.lagradost.cloudstream3.BuildConfig
 import java.lang.ref.WeakReference
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /** Banner-only ads. No startup, interstitial, rewarded, or player ads are used. */
 object AdsManager {
@@ -23,6 +27,7 @@ object AdsManager {
 
     @Volatile private var initialized = false
     @Volatile private var consentRequested = false
+    private val sdkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val pendingContainers = mutableListOf<WeakReference<FrameLayout>>()
 
     fun requestConsent(activity: Activity) {
@@ -58,9 +63,16 @@ object AdsManager {
     private fun initialize(context: Context) {
         if (initialized) return
         initialized = true
-        // Google initializes asynchronously; callers must never wait on the UI thread.
-        MobileAds.initialize(context.applicationContext) {
-            Log.d("KAPlayAds", "Mobile Ads SDK initialized")
+        // Keep SDK class loading and initialization off the Activity startup path.
+        sdkScope.launch {
+            try {
+                MobileAds.initialize(context.applicationContext) {
+                    Log.d("KAPlayAds", "Mobile Ads SDK initialized")
+                }
+            } catch (error: Throwable) {
+                initialized = false
+                Log.w("KAPlayAds", "Mobile Ads SDK initialization failed", error)
+            }
         }
     }
 
@@ -82,7 +94,8 @@ object AdsManager {
             return
         }
         initialize(context)
-        loadBanner(context, container)
+        // AdView and loadAd must be created on the main thread.
+        container.post { loadBanner(context, container) }
     }
 
     private fun FrameLayout.findAdViews(): List<AdView> =
