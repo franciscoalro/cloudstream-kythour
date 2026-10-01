@@ -1,11 +1,11 @@
 {
-  "versionCode": 29847489,
+  "versionCode": 29847562,
   "versionName": "4.8.0-PRE",
-  "apkUrl": "https://github.com/franciscoalro/cloudstream-kythour/releases/download/app-v29847489/kaplay-production-29847489.apk",
+  "apkUrl": "https://github.com/franciscoalro/cloudstream-kythour/releases/download/app-v29847562/kaplay-production-29847562.apk",
   "changelog": "Build automático do CloudStream Kythour Premium com plugins integrados e atualização remota.",
-  "id": "app-v29847489",
+  "id": "app-v29847562",
   "packageName": "com.lagradost.cloudstream3.prerelease.debug",
-  "sha256": "dde90ae86491976e2626d447e97dd74e063c01a9b56b47b7ad096dfe661e442e",
+  "sha256": "5e9dc181a6753e4123aa6f7f451b1496f98e22bddeede96145d75c0b539422b4",
   "certificateSha256": "42931699f937b2a2c68da3101c955088ec564cc9aa568f65586e04dcb555ee4f",
   "size": 78507802
 }
