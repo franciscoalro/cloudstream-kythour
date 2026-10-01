@@ -58,7 +58,10 @@ object AdsManager {
     private fun initialize(context: Context) {
         if (initialized) return
         initialized = true
-        MobileAds.initialize(context)
+        // Google initializes asynchronously; callers must never wait on the UI thread.
+        MobileAds.initialize(context.applicationContext) {
+            Log.d("KAPlayAds", "Mobile Ads SDK initialized")
+        }
     }
 
     fun detachBanner(container: FrameLayout) {
