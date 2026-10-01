@@ -465,6 +465,24 @@ class SearchFragment : BaseFragment<FragmentSearchBinding>(
             }
         })
 
+        observe(searchViewModel.failedProviders) { failedProviders ->
+            val status = binding.searchProviderStatus
+            val failedCount = failedProviders.size
+            status.isVisible = failedCount > 0
+            if (failedCount > 0) {
+                status.text = resources.getQuantityString(
+                    R.plurals.search_provider_failures,
+                    failedCount,
+                    failedCount,
+                )
+                status.setOnClickListener {
+                    searchViewModel.retryFailedProviders(isQuickSearch = false)
+                }
+            } else {
+                status.setOnClickListener(null)
+            }
+        }
+
         observe(searchViewModel.searchResponse) {
             when (it) {
                 is Resource.Success -> {

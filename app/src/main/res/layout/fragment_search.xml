@@ -115,6 +115,22 @@
         <include
             android:id="@+id/tvtypes_chips_scroll"
             layout="@layout/tvtypes_chips_scroll" />
+
+        <TextView
+            android:id="@+id/search_provider_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:background="@drawable/rounded_select_ripple"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp"
+            android:textColor="?attr/textColor"
+            android:textSize="13sp"
+            android:visibility="gone"
+            tools:text="2 providers failed · Tap to retry"
+            tools:visibility="visible" />
     </LinearLayout>
 
 

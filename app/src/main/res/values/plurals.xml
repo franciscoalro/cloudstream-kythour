@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="search_provider_failures">
+        <item quantity="one">1 provider failed · Tap to retry</item>
+        <item quantity="other">%d providers failed · Tap to retry</item>
+    </plurals>
+</resources>

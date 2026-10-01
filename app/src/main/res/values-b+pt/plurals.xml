@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="search_provider_failures">
+        <item quantity="one">1 provedor falhou · Toque para tentar novamente</item>
+        <item quantity="other">%d provedores falharam · Toque para tentar novamente</item>
+    </plurals>
+</resources>
