@@ -126,24 +126,6 @@
             <ImageView
                     android:nextFocusUp="@id/result_back"
                     android:nextFocusDown="@id/result_description"
-                    android:nextFocusLeft="@id/result_share"
-                    android:nextFocusRight="@id/result_search"
-
-                    android:id="@+id/result_open_in_browser"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
-                    android:layout_margin="5dp"
-                    android:elevation="10dp"
-                    android:tooltipText="@string/result_open_in_browser"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_baseline_public_24"
-                    android:layout_gravity="end|center_vertical"
-                    android:contentDescription="@string/result_open_in_browser"
-                    app:tint="?attr/textColor" />
-
-            <ImageView
-                    android:nextFocusUp="@id/result_back"
-                    android:nextFocusDown="@id/result_description"
                     android:nextFocusLeft="@id/result_open_in_browser"
                     android:nextFocusRight="@id/result_recommendations_btt"
 

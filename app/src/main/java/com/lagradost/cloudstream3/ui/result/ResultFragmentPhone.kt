@@ -369,19 +369,9 @@ open class ResultFragmentPhone : BaseFragment<FragmentResultSwipeBinding>(
     var selectEpisodeRange: String? = null
 
     private fun setUrl(url: String?) {
-        if (url == null) {
-            binding?.resultOpenInBrowser?.isVisible = false
-            return
-        }
+        if (url == null) return
 
         val valid = url.startsWith("http")
-
-        binding?.resultOpenInBrowser?.apply {
-            isVisible = valid
-            setOnClickListener {
-                context?.openBrowser(url)
-            }
-        }
 
         resultBinding?.resultReloadConnectionOpenInBrowser?.setOnClickListener {
             view?.context?.openBrowser(url)
