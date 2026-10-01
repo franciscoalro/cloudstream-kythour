@@ -332,7 +332,7 @@ class HomeViewModel : ViewModel() {
         if (repo?.hasMainPage != true) {
             _page.postValue(Resource.Success(emptyMap()))
             _preview.postValue(Resource.Failure(false, "No homepage"))
-            return@ioSafe
+            return@launchSafe
         }
 
 
@@ -522,7 +522,7 @@ class HomeViewModel : ViewModel() {
             // if we don't need to reload and we have a valid homepage or currently loading the same thing then return
             val currentLoading = isCurrentlyLoadingName
             if (!forceReload && (currentPage is Resource.Success && currentPage.value.isNotEmpty() || (currentLoading != null && currentLoading == preferredApiName))) {
-                return@ioSafe
+                return@launchSafe
             }
 
             val api = getApiFromNameNull(preferredApiName)
