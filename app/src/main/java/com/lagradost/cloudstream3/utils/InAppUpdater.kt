@@ -139,7 +139,11 @@ object InAppUpdater {
             packageManager.getPackageInfo(packageName, 0).versionCode.toLong()
         }
         val updateId = manifest.id ?: "kythour-${manifest.versionCode}"
+        val expectedPackageName = this@Activity.packageName
         val packageName = requireNotNull(manifest.packageName) { "Missing update package name" }
+        require(packageName == expectedPackageName) {
+            "Update package does not match installed channel: $packageName"
+        }
         val sha256 = requireNotNull(manifest.sha256) { "Missing update SHA-256" }
         val certificateSha256 = requireNotNull(manifest.certificateSha256) {
             "Missing update signing certificate"

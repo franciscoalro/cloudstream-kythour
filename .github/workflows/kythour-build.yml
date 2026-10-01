@@ -36,13 +36,13 @@ jobs:
 
       - name: Restore production signing key
         env:
-          DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+          PRODUCTION_KEYSTORE_BASE64: ${{ secrets.PRODUCTION_KEYSTORE_BASE64 || secrets.DEBUG_KEYSTORE_BASE64 }}
         run: |
-          test -n "$DEBUG_KEYSTORE_BASE64"
-          mkdir -p "$HOME/.android" "$HOME/work/_temp/keystore"
-          printf '%s' "$DEBUG_KEYSTORE_BASE64" | base64 --decode > "$HOME/.android/debug.keystore"
-          cp "$HOME/.android/debug.keystore" "$HOME/work/_temp/keystore/kythour-debug.keystore"
-          chmod 600 "$HOME/.android/debug.keystore" "$HOME/work/_temp/keystore/kythour-debug.keystore"
+          test -n "$PRODUCTION_KEYSTORE_BASE64"
+          mkdir -p "$HOME/work/_temp/keystore"
+          printf '%s' "$PRODUCTION_KEYSTORE_BASE64" | base64 --decode > "$HOME/work/_temp/keystore/kythour-production.keystore"
+          test -s "$HOME/work/_temp/keystore/kythour-production.keystore"
+          chmod 600 "$HOME/work/_temp/keystore/kythour-production.keystore"
 
       - name: Validate Kotlin ABI and production checks
         env:
@@ -54,22 +54,22 @@ jobs:
 
       - name: Build production APK
         env:
-          SIGNING_STORE_FILE: ${{ github.workspace }}/kythour-debug.keystore
-          SIGNING_KEY_ALIAS: androiddebugkey
-          SIGNING_KEY_PASSWORD: android
-          SIGNING_STORE_PASSWORD: android
+          SIGNING_STORE_FILE: ${{ github.workspace }}/kythour-production.keystore
+          SIGNING_KEY_ALIAS: ${{ secrets.PRODUCTION_KEY_ALIAS || 'androiddebugkey' }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.PRODUCTION_KEY_PASSWORD || 'android' }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.PRODUCTION_STORE_PASSWORD || 'android' }}
         run: |
-          cp "$HOME/.android/debug.keystore" "$SIGNING_STORE_FILE"
+          cp "$HOME/work/_temp/keystore/kythour-production.keystore" "$SIGNING_STORE_FILE"
           chmod 600 "$SIGNING_STORE_FILE"
           chmod +x gradlew
           ./gradlew assemblePrereleaseProduction --stacktrace --no-daemon
 
       - name: Sign APK with stable key
         env:
-          SIGNING_STORE_FILE: ${{ github.workspace }}/kythour-debug.keystore
-          SIGNING_KEY_ALIAS: androiddebugkey
-          SIGNING_KEY_PASSWORD: android
-          SIGNING_STORE_PASSWORD: android
+          SIGNING_STORE_FILE: ${{ github.workspace }}/kythour-production.keystore
+          SIGNING_KEY_ALIAS: ${{ secrets.PRODUCTION_KEY_ALIAS || 'androiddebugkey' }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.PRODUCTION_KEY_PASSWORD || 'android' }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.PRODUCTION_STORE_PASSWORD || 'android' }}
         run: |
           set -euo pipefail
           APK="$(find app/build/outputs/apk/prerelease/production -name '*.apk' -type f -print -quit)"
