@@ -1210,6 +1210,9 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         setNavigationBarColorCompat(R.attr.primaryGrayBackground)
         updateLocale()
         super.onCreate(savedInstanceState)
+        if (!isLayout(TV)) {
+            com.lagradost.cloudstream3.utils.AdsManager.requestConsent(this)
+        }
         try {
             if (isCastApiAvailable()) {
                 CastContext.getSharedInstance(this) { it.run() }

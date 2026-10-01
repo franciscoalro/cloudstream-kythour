@@ -73,6 +73,7 @@ import com.lagradost.cloudstream3.ui.search.SearchHelper
 import com.lagradost.cloudstream3.ui.setRecycledViewPool
 import com.lagradost.cloudstream3.ui.settings.SettingsGeneral.Companion.pickDownloadPath
 import com.lagradost.cloudstream3.ui.settings.utils.getChooseFolderLauncher
+import com.lagradost.cloudstream3.utils.AdsManager
 import com.lagradost.cloudstream3.utils.AppContextUtils.getNameFull
 import com.lagradost.cloudstream3.utils.AppContextUtils.isCastApiAvailable
 import com.lagradost.cloudstream3.utils.AppContextUtils.loadCache
@@ -436,6 +437,9 @@ open class ResultFragmentPhone : BaseFragment<FragmentResultSwipeBinding>(
 
         resultBinding = binding.fragmentResult
         recommendationBinding = binding.resultRecommendations
+        resultBinding?.resultEpisodesAdContainer?.let { adContainer ->
+            AdsManager.attachBanner(binding.root.context, adContainer)
+        }
         syncBinding = binding.resultSync
 
         // Set up trailer player

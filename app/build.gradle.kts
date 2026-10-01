@@ -244,6 +244,10 @@ dependencies {
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.serialization.json) // JSON Parser
 
+    // Advertising (banners only; consent is requested before loading)
+    implementation(libs.admob)
+    implementation(libs.ump)
+
     // Design & UI
     implementation(libs.preference.ktx)
     implementation(libs.material)
