@@ -110,15 +110,29 @@
 
         </androidx.cardview.widget.CardView>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/tests_play_pause"
-            style="@style/WhiteButton"
-            android:layout_width="wrap_content"
-            android:layout_margin="10dp"
-            android:text="@string/start"
-            app:icon="@drawable/ic_baseline_play_arrow_24">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingHorizontal="6dp">
 
-        </com.google.android.material.button.MaterialButton>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/tests_play_pause"
+                style="@style/WhiteButton"
+                android:layout_width="wrap_content"
+                android:layout_margin="4dp"
+                android:text="@string/start"
+                app:icon="@drawable/ic_baseline_play_arrow_24" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/tests_retry_failed"
+                style="@style/BlackButton"
+                android:layout_width="wrap_content"
+                android:layout_margin="4dp"
+                android:text="@string/retry_failed_tests"
+                android:visibility="gone"
+                app:icon="@drawable/ic_refresh" />
+        </LinearLayout>
 
     </LinearLayout>
 

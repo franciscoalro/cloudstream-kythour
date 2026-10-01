@@ -86,9 +86,18 @@ class TestViewModel : ViewModel() {
     }
 
     fun startTest() {
+        startTest(APIHolder.allProviders.withLock { APIHolder.allProviders.toTypedArray() })
+    }
+
+    fun retryFailedTests() {
+        val failedProviders = providers.withLock { providers.filter { !it.second.success }.map { it.first }.toTypedArray() }
+        if (failedProviders.isNotEmpty()) startTest(failedProviders)
+    }
+
+    private fun startTest(apis: Array<MainAPI>) {
+        scope?.cancel()
         scope = CoroutineScope(Dispatchers.Default)
 
-        val apis = APIHolder.allProviders.withLock { APIHolder.allProviders.toTypedArray() }
         total = apis.size
         failed = 0
         passed = 0

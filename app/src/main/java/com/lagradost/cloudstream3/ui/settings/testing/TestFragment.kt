@@ -56,6 +56,10 @@ class TestFragment : BaseFragment<FragmentTestingBinding>(
                     TestView.TestState.None -> testViewModel.startTest()
                 }
             }
+            providerTest.setOnRetryFailedListener {
+                testViewModel.setFilterMethod(TestViewModel.ProviderFilter.Failed)
+                testViewModel.retryFailedTests()
+            }
 
             if (isLayout(TV)) {
                 providerTest.playPauseButton?.isFocusableInTouchMode = true

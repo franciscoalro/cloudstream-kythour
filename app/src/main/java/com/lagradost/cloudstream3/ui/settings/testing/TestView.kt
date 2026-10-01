@@ -40,7 +40,9 @@ class TestView @JvmOverloads constructor(
     var totalProgressBar: ContentLoadingProgressBar? = null
 
     var playPauseButton: MaterialButton? = null
+    var retryFailedButton: MaterialButton? = null
     var stateListener: (TestState) -> Unit = {}
+    var retryFailedListener: () -> Unit = {}
 
     private var state = TestState.None
 
@@ -58,6 +60,9 @@ class TestView @JvmOverloads constructor(
 
         totalProgressBar = findViewById(R.id.test_total_progress)
         playPauseButton = findViewById(R.id.tests_play_pause)
+        retryFailedButton = findViewById(R.id.tests_retry_failed)
+
+        retryFailedButton?.setOnClickListener { retryFailedListener.invoke() }
 
         attrs?.let {
             context.withStyledAttributes(it, R.styleable.TestView) {
@@ -91,6 +96,7 @@ class TestView @JvmOverloads constructor(
         mainSectionText?.text = "$totalProgress / ${total?.toString() ?: "?"}"
         testsPassedSectionText?.text = passed.toString()
         testsFailedSectionText?.text = failed.toString()
+        retryFailedButton?.isVisible = failed > 0 && totalProgress == total
 
         totalProgressBar?.max = (total ?: 0) * 1000
         totalProgressBar?.animateProgressTo(totalProgress * 1000)
@@ -103,6 +109,10 @@ class TestView @JvmOverloads constructor(
 
     fun setMainHeader(@StringRes header: Int) {
         mainSectionHeader?.setText(header)
+    }
+
+    fun setOnRetryFailedListener(listener: () -> Unit) {
+        retryFailedListener = listener
     }
 
     fun setOnMainClick(listener: OnClickListener) {

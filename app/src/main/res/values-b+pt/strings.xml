@@ -386,6 +386,7 @@
     <string name="cast_format" formatted="true">Elenco: %s</string>
     <string name="update_started">Atualização iniciada</string>
     <string name="test_log">Log</string>
+    <string name="retry_failed_tests">Testar falhas novamente</string>
     <string name="apk_installer_settings_des">Alguns aparelhos não suportam o novo instalador de pacotes. Use a opção legado caso não esteja conseguindo atualizar.</string>
     <string name="episodes_range">%1$d-%2$d</string>
     <string name="episode_format" formatted="true">%1$d %2$s</string>
