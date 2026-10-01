@@ -1467,9 +1467,9 @@ open class ResultFragmentPhone : BaseFragment<FragmentResultSwipeBinding>(
                 }
                 resultBinding?.apply {
                     resultRecommendationsBtt.nextFocusDownId = nextFocusDown
-                    resultShare.nextFocusDownId = nextFocusDown
-                    resultShare.nextFocusDownId = nextFocusDown
-                    resultShare.nextFocusDownId = nextFocusDown
+                    resultRecommendationsBtt.nextFocusDownId = nextFocusDown
+                    resultRecommendationsBtt.nextFocusDownId = nextFocusDown
+                    resultRecommendationsBtt.nextFocusDownId = nextFocusDown
                 }
             }
             resultOverlappingPanels.setEndPanelLockState(if (isInvalid) OverlappingPanelsLayout.LockState.CLOSE else OverlappingPanelsLayout.LockState.UNLOCKED)
