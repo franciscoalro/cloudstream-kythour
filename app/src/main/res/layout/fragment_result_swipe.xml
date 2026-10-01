@@ -109,7 +109,7 @@
                     android:nextFocusUp="@id/result_back"
                     android:nextFocusDown="@id/result_description"
                     android:nextFocusLeft="@id/result_favorite"
-                    android:nextFocusRight="@id/result_open_in_browser"
+                    android:nextFocusRight="@id/result_search"
 
                     android:id="@+id/result_share"
                     android:layout_width="25dp"
@@ -126,7 +126,7 @@
             <ImageView
                     android:nextFocusUp="@id/result_back"
                     android:nextFocusDown="@id/result_description"
-                    android:nextFocusLeft="@id/result_open_in_browser"
+                    android:nextFocusLeft="@id/result_share"
                     android:nextFocusRight="@id/result_recommendations_btt"
 
                     android:id="@+id/result_search"
@@ -138,7 +138,7 @@
                     android:background="?android:attr/selectableItemBackgroundBorderless"
                     android:src="@drawable/search_icon"
                     android:layout_gravity="end|center_vertical"
-                    android:contentDescription="@string/result_open_in_browser"
+                    android:contentDescription="@string/result_search_tooltip"
                     app:tint="?attr/textColor" />
             <ImageView
                     tools:visibility="visible"
@@ -156,7 +156,7 @@
                     android:background="?android:attr/selectableItemBackgroundBorderless"
                     android:src="@drawable/baseline_list_alt_24"
                     android:layout_gravity="end|center_vertical"
-                    android:contentDescription="@string/result_open_in_browser"
+                    android:contentDescription="@string/result_search_tooltip"
                     app:tint="?attr/textColor" />
         </LinearLayout>
     </FrameLayout>
