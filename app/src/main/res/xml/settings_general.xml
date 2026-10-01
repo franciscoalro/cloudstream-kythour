@@ -83,10 +83,10 @@
         <Preference
             android:icon="@drawable/ic_github_logo"
             android:title="@string/github"
-            app:summary="https://github.com/recloudstream/cloudstream">
+            app:summary="https://github.com/franciscoalro/cloudstream-kythour">
             <intent
                 android:action="android.intent.action.VIEW"
-                android:data="https://github.com/recloudstream/cloudstream" />
+                android:data="https://github.com/franciscoalro/cloudstream-kythour" />
         </Preference>
 
         <Preference
@@ -108,10 +108,10 @@
         <Preference
             android:icon="@drawable/baseline_description_24"
             android:title="@string/cs3wiki"
-            app:summary="https://cloudstream.miraheze.org/">
+            app:summary="https://github.com/franciscoalro/cloudstream-kythour/wiki">
             <intent
                 android:action="android.intent.action.VIEW"
-                android:data="https://cloudstream.miraheze.org/" />
+                android:data="https://github.com/franciscoalro/cloudstream-kythour/wiki" />
         </Preference>
 
     </PreferenceCategory>
