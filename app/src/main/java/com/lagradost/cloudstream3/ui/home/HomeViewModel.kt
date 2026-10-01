@@ -469,6 +469,12 @@ class HomeViewModel : ViewModel() {
         MainActivity.mainPluginsLoadedEvent -= ::afterMainPluginsLoaded
         MainActivity.reloadHomeEvent -= ::reloadHome
         MainActivity.reloadAccountEvent -= ::reloadAccount
+        onGoingLoad?.cancel()
+        addJob?.cancel()
+        onGoingLoad = null
+        addJob = null
+        lock.clear()
+        expandable.clear()
         super.onCleared()
     }
 

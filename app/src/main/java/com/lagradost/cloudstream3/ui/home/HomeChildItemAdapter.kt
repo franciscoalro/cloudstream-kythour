@@ -203,6 +203,10 @@ open class HomeChildItemAdapter(
         }
     }
 
+    override fun onClearView(holder: ViewHolderState<Boolean>) {
+        clearImage(holder.view.root.findViewById(R.id.imageView))
+    }
+
     override fun onBindContent(
         holder: ViewHolderState<Boolean>,
         item: SearchResponse,
