@@ -25,6 +25,11 @@ class CloudflareKiller : Interceptor {
         private const val COOKIE_PREFS = "provider_cookie_jar"
         private val ERROR_CODES = listOf(403, 503)
         private val CLOUDFLARE_SERVERS = listOf("cloudflare-nginx", "cloudflare")
+        fun clearPersistedCookies() {
+            CloudStreamApp.context?.getSharedPreferences(COOKIE_PREFS, android.content.Context.MODE_PRIVATE)
+                ?.edit()?.clear()?.apply()
+        }
+
         fun parseCookieMap(cookie: String): Map<String, String> {
             return cookie.split(";").associate {
                 val split = it.split("=")
@@ -56,8 +61,7 @@ class CloudflareKiller : Interceptor {
 
     fun clearPersistedCookies() {
         savedCookies.clear()
-        CloudStreamApp.context?.getSharedPreferences(COOKIE_PREFS, android.content.Context.MODE_PRIVATE)
-            ?.edit()?.clear()?.apply()
+        Companion.clearPersistedCookies()
     }
 
     /**
