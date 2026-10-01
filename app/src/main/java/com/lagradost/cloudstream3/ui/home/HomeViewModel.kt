@@ -312,13 +312,14 @@ class HomeViewModel : ViewModel() {
 
     private var addJob: Job? = null
     fun loadMoreHomeScrollResponses() {
-        addJob = ioSafe {
+        addJob?.cancel()
+        addJob = viewModelScope.launchSafe(Dispatchers.IO) {
             updatePreviewResponses(previewResponses, previewResponsesAdded, currentShuffledList, 1)
             _preview.postValue(Resource.Success((previewResponsesAdded.size < currentShuffledList.size) to previewResponses))
         }
     }
 
-    private fun load(api: MainAPI): Job = ioSafe {
+    private fun load(api: MainAPI): Job = viewModelScope.launchSafe(Dispatchers.IO) {
         repo = //if (api != null) {
             APIRepository(api)
         //} else {
@@ -511,7 +512,7 @@ class HomeViewModel : ViewModel() {
         forceReload: Boolean = true,
         fromUI: Boolean = false
     ) =
-        ioSafe {
+        viewModelScope.launchSafe(Dispatchers.IO) {
             //println("trying to load $preferredApiName")
             // Since plugins are loaded in stages this function can get called multiple times.
             // The issue with this is that the homepage may be fetched multiple times while the first request is loading

@@ -43,7 +43,9 @@ object InAppUpdater {
     private const val KYTHOUR_UPDATE_MANIFEST =
         "https://raw.githubusercontent.com/franciscoalro/cloudstream-kythour/master/app-update.json"
 
-    private const val PRERELEASE_PACKAGE_NAME = "com.lagradost.cloudstream3.prerelease"
+    // The published Kythour channel intentionally keeps this package for update compatibility.
+    private val PRERELEASE_PACKAGE_NAME: String
+        get() = BuildConfig.APPLICATION_ID
     private const val LOG_TAG = "InAppUpdater"
 
     @Serializable
@@ -293,6 +295,12 @@ object InAppUpdater {
     }
 
     fun Activity.installPreReleaseIfNeeded() = ioSafe {
+        // The legacy prerelease installer must never target a different package.
+        // Kythour updates are handled by the signed manifest channel below.
+        if (packageName == BuildConfig.APPLICATION_ID) {
+            Log.i(LOG_TAG, "Skipping legacy prerelease installer for Kythour channel")
+            return@ioSafe
+        }
         val isInstalled = try {
             packageManager.getPackageInfo(PRERELEASE_PACKAGE_NAME, 0)
             true
