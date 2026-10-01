@@ -155,6 +155,10 @@ jobs:
         run: |
           python3 scripts/update-app-manifest.py
           python3 -m json.tool app-update.json >/dev/null
+           test "$(python3 -c 'import json; print(json.load(open("app-update.json"))["packageName"])')" = "com.lagradost.cloudstream3.prerelease.debug"
+           test "$(python3 -c 'import json; print(json.load(open("app-update.json"))["certificateSha256"])')" = "42931699f937b2a2c68da3101c955088ec564cc9aa568f65586e04dcb555ee4f"
+           test "$(python3 -c 'import json; print(json.load(open("app-update.json"))["versionCode"])')" = "$VERSION_CODE"
+           test "$(python3 -c 'import json; print(json.load(open("app-update.json"))["size"])')" = "$(stat -c %s "$APK")"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
           git add app-update.json
