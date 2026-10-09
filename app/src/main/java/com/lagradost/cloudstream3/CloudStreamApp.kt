@@ -17,6 +17,8 @@ import com.lagradost.cloudstream3.BuildConfig
 import com.lagradost.cloudstream3.mvvm.safe
 import com.lagradost.cloudstream3.mvvm.safeAsync
 import com.lagradost.cloudstream3.plugins.PluginManager
+import com.lagradost.cloudstream3.plugins.RepositoryData
+import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.settings.Globals.EMULATOR
 import com.lagradost.cloudstream3.ui.settings.Globals.TV
 import com.lagradost.cloudstream3.ui.settings.Globals.isLayout
@@ -84,6 +86,10 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
         }
 
         AppDebug.isDebug = BuildConfig.DEBUG
+        
+        // Add Kythour plugin repository as prebuilt
+        val kythourRepo = RepositoryData("Kythour Plugins", "https://raw.githubusercontent.com/franciscoalro/kythourcl-dist/main/builds/plugins.json")
+        setKey("PREBUILT_REPOSITORIES", arrayOf(kythourRepo))
     }
 
     override fun attachBaseContext(base: Context?) {
